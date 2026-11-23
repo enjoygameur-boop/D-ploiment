@@ -138,3 +138,9 @@ OUVERT
   Sections 2 et 4-6 fusionnees: l installateur fait copie, licence, protections, raccourci.
   Le chemin manuel (setup/2_creer_dossier.ps1, depot a la main) n est plus decrit.
   setup/2_creer_dossier.ps1 reste livre comme outil de reparation.
+
+2026-11-23 Etat des lieux classe sans suite
+  Sujets deja couverts: build par BUILD.md, defauts par DEFAUTS.md, risques par RISQUES.md,
+  installation par le document client.
+  Seul manque residuel: les contournements connus, eparpilles dans le journal.
+  Restent: manuel utilisateur, defauts D02 D03 D05 D10 D15.
