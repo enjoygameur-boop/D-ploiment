@@ -8,3 +8,5 @@ ba.txt
 bp.txt
 build_aio_out.txt
 _inv.txt
+*.log
+robrun_runtime.txt
