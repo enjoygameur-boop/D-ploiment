@@ -1,79 +1,61 @@
 # Dreww - installation client
 
-Suis les etapes dans l ordre, sans en sauter. Une etape ratee donne un refus au lancement, pas un plantage: lis le code affiche.
+Suis les etapes dans l ordre. Une etape ratee donne un refus au lancement, pas un plantage: lis le code affiche.
 
 ## 1. Ce qu il te faut
 
 - Windows 10 ou 11, 64 bits, a jour.
-- Droits administrateur (le loader les demande).
-- Le runtime WebView2 (fourni d origine sur Windows 11; sur Windows 10, installe-le depuis le site de Microsoft s il manque).
-- Le dossier livre apres achat: loader, AIO, configs, dossier setup, licence.dat, ce document.
+- Droits administrateur.
+- Le runtime WebView2 (fourni d origine sur Windows 11).
+- Le dossier livre apres achat et ton fichier licence.dat.
 
-## 2. Integrite de la memoire
+## 2. Windows Defender
 
-Parametres > Confidentialite et securite > Securite Windows > Securite du peripherique > Details sur l isolation du noyau: mets **Integrite de la memoire** sur Desactive, puis redemarre.
-
-Si l option est grisee ou revient toute seule, ne t acharne pas: l etape 4 s en occupe par le registre.
-
-## 3. Windows Defender
-
-Le pilote est souvent bloque par Defender. Coupe-le avec Defender Control de Sordum:
+Coupe-le avant de lancer l installateur, il bloque le pilote. Telecharge Defender Control de Sordum:
 
 https://www.sordum.org/9480/defender-control-v2-1/
 
-Telecharge, decompresse, lance `dControl.exe` en administrateur, clique sur **Disable Windows Defender**. Referme l outil.
+Decompresse, lance `dControl.exe` en administrateur, clique **Disable Windows Defender**, referme.
 
-Rien a faire de plus: la decision tient apres redemarrage. Pour rendre Defender plus tard, relance l outil et clique sur Enable.
+## 3. Lancer l installateur
 
-## 4. Couper l hyperviseur
+Clic droit sur `INSTALLER.ps1`, **Executer avec PowerShell**. Il s eleve seul et enchaine tout:
 
-Dans le dossier setup, clic droit sur `1_couper_hyperviseur.ps1`, **Executer avec PowerShell**. Le script s eleve seul et demande confirmation a l ecran d utilisateur.
+- copie du produit dans `C:\Dreww`;
+- fenetre de choix: designe ton `licence.dat`, il l installe lui-meme au bon endroit;
+- coupure de l integrite de la memoire, de l hyperviseur, de Hyper-V, WSL2, Sandbox et Docker;
+- raccourci Dreww sur le bureau;
+- redemarrage.
 
-Il coupe l integrite de la memoire par le registre, l hyperviseur au demarrage, Hyper-V, la plateforme machine virtuelle, la plateforme de l hyperviseur, WSL2, la sandbox Windows, les services de virtualisation et Docker, puis redemarre au bout de 15 secondes.
+Ne ferme pas la fenetre avant la fin. Si tu choisis un autre fichier que `licence.dat`, l installation continue mais la licence manquera.
 
-Si tu vis avec WSL2 ou Docker au quotidien, sache que tu devras les remettre en route apres, avec `bcdedit /set hypervisorlaunchtype auto` et la reinstallation des fonctionnalites.
+## 4. Apres le redemarrage
 
-## 5. Creer le dossier de licence
+Double-clic sur le raccourci **Dreww**. Il demande l elevation, accepte.
 
-Dans le dossier setup, clic droit sur `2_creer_dossier.ps1`, **Executer avec PowerShell**. Le script cree `%LOCALAPPDATA%\Dreww` et ouvre le dossier dans l explorateur.
+Ne lance pas `RobRunPort.exe` directement et ne te fie pas a `START.bat`: seul le raccourci passe par le loader, qui mappe le driver.
 
-Pas besoin d administrateur pour celui-ci.
-## 6. Deposer la licence
+## 5. SmartScreen
 
-Place le fichier `licence.dat` recu apres achat dans le dossier ouvert a l etape 5, sans le renommer et sans l ouvrir.
+Le binaire n est pas signe. Au premier lancement: **Informations complementaires**, puis **Executer quand meme**.
 
-Chemin complet typique: `C:\Users\<ton nom>\AppData\Local\Dreww\licence.dat`
-
-Ne le deplace pas ailleurs: le loader cherche exactement la.
-
-## 7. Lancer
-
-Installe le dossier du produit dans un chemin fixe, par exemple `C:\Dreww`. Evite le Bureau, les telechargements et OneDrive: les chemins qui bougent cassent le loader.
-
-Double-clic sur le raccourci **Dreww** du bureau, ou clic droit sur `1_run\FFLoader.exe` puis **Executer en tant qu administrateur**. Le loader eleve l AIO, qui mappe le driver. Ne lance pas `RobRunPort.exe` directement: il demarre sans le contexte du loader, et `START.bat` ne mappe pas le driver.
-
-## 8. SmartScreen
-
-Le binaire n est pas signe. Au premier lancement, Windows affiche « Windows a protege votre PC ». Clique sur **Informations complementaires**, puis **Executer quand meme**. La decision est memorisee pour ce fichier.
-
-Si Defender est revenu entre temps, ajoute `C:\Dreww` et le dossier `%LOCALAPPDATA%\Dreww` en exclusion.
-
-## 9. Si le lancement est refuse
+## 6. Si le lancement est refuse
 
 La fenetre donne un code et l empreinte de la machine:
 
-- 1: `licence.dat` introuvable. Reprends l etape 6, verifie le nom exact et le dossier.
-- 2: fichier illisible. Re-telecharge la piece jointe, ne le recopie pas a la main.
-- 3: jeton mal forme. Le fichier a ete tronque ou modifie: redemande-le.
-- 5: licence liee a une autre machine. Ta place est deja prise.
+- 1: licence.dat introuvable. Relance l installateur et choisis le fichier.
+- 2: fichier illisible. Re-telecharge la piece jointe.
+- 3: jeton mal forme. Fichier tronque: redemande-le.
+- 5: licence liee a une autre machine.
 - 6: licence expiree.
-- 7: horloge reculee. Remets l heure automatique dans Windows.
+- 7: horloge reculee. Remets l heure automatique.
 - 8: signature invalide. Fichier altere: redemande-le.
-- 9: crypto indisponible. Redemarre, puis relance.
-- 10: licence deja liee a une autre machine, place unique. Meme reponse que le 5.
+- 9: crypto indisponible. Redemarre et relance.
+- 10: licence deja liee a une autre machine, place unique.
 
 Envoie le code et l empreinte au support, pas le fichier.
 
-## 10. Regles
+## 7. Regles
 
-- Garde le dossier du produit et le dossier de licence en place tant que la licence court.
+- Garde le dossier `C:\Dreww` et le dossier de licence en place tant que la licence court.
+- Ne desactive pas le raccourci: il porte l elevation necessaire au pilote.

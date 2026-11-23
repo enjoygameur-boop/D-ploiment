@@ -133,3 +133,8 @@ OUVERT
   overlay fonctionnel en jeu.
   Defaut corrige: le raccourci visait START.bat qui ne mappe pas le driver; il vise FFLoader.exe.
   Document aligne: raccourci ou FFLoader; START.bat signale comme ne mappant pas le driver.
+
+2026-11-23 Document client ramene a la voie installateur
+  Sections 2 et 4-6 fusionnees: l installateur fait copie, licence, protections, raccourci.
+  Le chemin manuel (setup/2_creer_dossier.ps1, depot a la main) n est plus decrit.
+  setup/2_creer_dossier.ps1 reste livre comme outil de reparation.
