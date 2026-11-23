@@ -144,3 +144,5 @@ OUVERT
   installation par le document client.
   Seul manque residuel: les contournements connus, eparpilles dans le journal.
   Restent: manuel utilisateur, defauts D02 D03 D05 D10 D15.
+
+2026-11-23 D15 classe sans suite: pas de desinstalleur pour l instant.
