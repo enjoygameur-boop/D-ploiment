@@ -33,3 +33,23 @@ VERIFICATION EN JEU
 OUVERT
   seuil 0.95 et exemption vehicule a confirmer sur plusieurs sessions.
   Sonde copf/probe retiree du binaire final.
+
+=== 2026-11-23 - agent Venice - aio embleme ===
+INTENTION
+  draw_emblem etait annonce comme code mort. Verification: g_brand_bmp n etait jamais assigne et AIO_BITMAP_BRAND jamais charge. Le code mort etait la branche bitmap, pas le repli.
+FICHIERS
+  2_src_port/aio_launcher.c, 1_run/RobRunAIO.exe, .gitignore, suppression 2_src_port/payload
+CONTENU
+  WM_CREATE charge la ressource 105 par LoadImageW + LR_CREATEDIBSECTION, accepte 32 bpp seulement, DeleteObject sinon. draw_emblem conserve en repli.
+  AlphaBlend passe en HALFTONE avec SetBrushOrgEx.
+  Bloc v1.0.0 peint deux fois supprime, une seule occurrence restante.
+  2_src_port/payload supprime: copie perimee 2240512, lue ni par build_aio ni par aio_launcher.rc.
+  masq.txt sorti du suivi et ignore.
+BUILD
+  BUILD_OK. aio 3240960 55A2722949E96B3E4E2EF9FABB77AB521B63BA50341A46B0461F34016ED4757A
+VERIFICATION
+  Fenetre --dry-run: embleme net en haut a gauche, v1.0.0 une fois en bas a droite. Payload apres extraction: quatre same=True. Pas de test en jeu.
+OUVERT
+  2_src_port/RobRunAIO.exe reste un intermediaire de build suivi.
+  Quatre builds overlay identifies: 2239488 C3FF1A82 vestige, 2240512 256B8F01 payload supprime, 2244096 F58CB24D session wl2, 2539008 FB209DD9 courant.
+  HANDOFF_aim_suivant etape 2 decrit encore la purge de 2_src_port/payload.
