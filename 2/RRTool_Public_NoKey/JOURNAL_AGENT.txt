@@ -76,3 +76,13 @@ OUVERT
   MachineGuid meurt a la reinstallation de Windows.
   En-tete de loader.cpp dit encore key-free.
   Aucun avertissement d expiration dans l UI.
+
+2026-11-23 A3 termine
+  licence.h inclus dans rr_esp.c, LNK2019 resolu.
+  lic_bind ecrit: re-verification de signature, refus si jeton lie ailleurs, lecture de bind.dat,
+  ajout atomique (bind.tmp puis MoveFileEx), quota plein = refus remonte en code 10.
+  Quota ramene de 3 a 1 sur decision utilisateur: un seul poste, support assume.
+  Messages alignes: "Cette licence est deja liee a une autre machine." (launcher et kMsg).
+  Tests: joker lie (C=1), relance acceptee, place prise par empreinte etrangere refusee,
+  jeton lie ailleurs refuse avant liaison (bind.dat intact).
+  AIO reconstruit, _wl.txt mis a jour (2545664 498800FF0C6B27A2), build_port_err.txt ignore.

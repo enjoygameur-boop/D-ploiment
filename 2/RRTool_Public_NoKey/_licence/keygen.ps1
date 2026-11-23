@@ -1,4 +1,4 @@
-param([int]$Days=7,[string]$Out="",[int]$Serial=0,[string]$Fingerprint="")
+param([int]$Days=30,[string]$Out="",[int]$Serial=0,[string]$Fingerprint="")
 $ErrorActionPreference="Stop"
 $d=$PSScriptRoot
 if(-not $Out){ $Out=Join-Path $d "licence.txt" }
