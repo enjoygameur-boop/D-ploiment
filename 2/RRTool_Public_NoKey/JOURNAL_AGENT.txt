@@ -178,3 +178,7 @@ OUVERT
   D02: les deux exe portent requireAdministrator en manifeste (verifie sur les binaires),
   l ecriture HKLM de l anti-recul est donc toujours possible.
   D03: vente en joker, l acheteur ne fournit jamais son empreinte, flux d activation sans objet.
+
+2026-11-23 setup/2_creer_dossier.ps1 retire
+  L installateur cree le dossier de licence; le script etait devenu redondant et n etait plus cite.
+  setup/ ne garde que 1_couper_hyperviseur.ps1, utilise par l installateur et en reparation.
