@@ -108,3 +108,11 @@ OUVERT
   suppression de la seule valeur recree depuis le fichier, empreinte etrangere refusee en 10.
   Reste ouvert: effacer les deux supports libere la place.
   AIO reconstruit, _wl.txt mis a jour (2546176 00E825936572F743).
+
+2026-11-23 Test en jeu, chaine complete
+  Machine encore protegee: refus propre du mappage, message nomme la cause, licence OK.
+  setup/1_couper_hyperviseur.ps1 execute, redemarrage, puis VBS=0 SS=0 HVCI=0.
+  Jeu lance par Steam, loader lance, deux clics, overlay present en jeu.
+  A retenir: l AIO se ferme apres extraction et l overlay se masque, donc Get-Process
+  ne les voit pas; seul le processus du jeu et l affichage a l ecran font foi.
+  INSTALLER.ps1 ajoute au suivi, non teste, trois defauts connus.
