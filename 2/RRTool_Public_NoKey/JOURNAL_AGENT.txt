@@ -53,3 +53,26 @@ OUVERT
   2_src_port/RobRunAIO.exe reste un intermediaire de build suivi.
   Quatre builds overlay identifies: 2239488 C3FF1A82 vestige, 2240512 256B8F01 payload supprime, 2244096 F58CB24D session wl2, 2539008 FB209DD9 courant.
   HANDOFF_aim_suivant etape 2 decrit encore la purge de 2_src_port/payload.
+
+=== 2026-11-23 - agent Venice - licence ===
+INTENTION
+  Poser le controle de licence dans l AIO: paire ECDSA P-256, jeton signe, anti-recul niveau 2.
+FICHIERS
+  _licence/ (private.p8, public.ec, q.hex, keygen.ps1, licence.txt), 2_src_port/licence.c, licence.h, aio_launcher.c, build_aio.bat
+CONTENU
+  Jeton base64 de 105 octets: magie RRL1, version, empreinte MachineGuid tronquee a 16, emission, expiration, serie, signature 64.
+  Verification BCrypt ECDSA_P256 sur blob public ECS1, avant extraction, apres creation de fenetre.
+  Anti-recul: Seen sous HKLM SOFTWARE Dreww, refus au dela de 24 h de recul. Signature verifiee avant avance de Seen.
+  Codes 1 introuvable, 2 illisible, 3 mal forme, 4 inconnu, 5 autre machine, 6 expiree, 7 horloge, 8 signature, 9 crypto.
+  private.p8 reste suivi: depot prive unique.
+BUILD
+  BUILD_OK. aio 3243520 EF72B8E7BB5FDE903914615D6F1125D47327D15AC5847D799CB9F445BB48BD44
+VERIFICATION
+  Refus verifies en reel: 1, 4, 5, 6, 7, 8. Jeton valide: licence OK puis DRY RUN OK.
+OUVERT
+  Codes 2 et 9 non provoques.
+  Contournement: START.bat et lancement direct de RobRunPort.exe sautent le controle.
+  Aucun flux d activation: l empreinte se lit a la main dans le registre.
+  MachineGuid meurt a la reinstallation de Windows.
+  En-tete de loader.cpp dit encore key-free.
+  Aucun avertissement d expiration dans l UI.
