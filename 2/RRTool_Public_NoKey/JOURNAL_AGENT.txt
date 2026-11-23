@@ -173,3 +173,8 @@ OUVERT
   aio_launcher.c: sous 7 jours, journal "licence: OK, expire dans N jour(s)".
   Arrondi tronque corrige en arrondi superieur apres test a 3 jours.
   Deux builds propres, driver mappe, overlay fonctionnel. _wl.txt a jour.
+
+2026-11-23 D02 ferme, D03 classe
+  D02: les deux exe portent requireAdministrator en manifeste (verifie sur les binaires),
+  l ecriture HKLM de l anti-recul est donc toujours possible.
+  D03: vente en joker, l acheteur ne fournit jamais son empreinte, flux d activation sans objet.

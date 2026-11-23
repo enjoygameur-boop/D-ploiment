@@ -6,8 +6,8 @@ Un defaut ferme reste liste avec sa date de fermeture: il documente une decision
 | ID | Defaut | Effet | Gravite | Etat |
 |---|---|---|---|---|
 | D01 | `bind.dat` n est pas signe et peut etre supprime | Effacer le fichier remet la place a zero; une copie registre le compense, effacer les deux remet la place a zero | 1 | attenue 2026-11-23 |
-| D02 | L anti-recul ecrit sous HKLM | Si le processus n est pas eleve, l ecriture echoue et le controle est inoperant | 2 | ouvert |
-| D03 | Aucun flux d activation | L empreinte se lit a la main dans le registre ou dans la fenetre de refus | 2 | ouvert |
+| D02 | L anti-recul ecrit sous HKLM | Si le processus n est pas eleve, l ecriture echoue et le controle est inoperant | 2 | ferme 2026-11-23: les deux exe exigent administrator par manifeste |
+| D03 | Aucun flux d activation | L empreinte se lit a la main dans le registre ou dans la fenetre de refus | 2 | classe 2026-11-23: vente en joker, l acheteur ne fournit jamais son empreinte |
 | D04 | L empreinte derive du MachineGuid | Reinstallation de Windows = nouveau jeton obligatoire | 2 | assume |
 | D05 | Aucun avertissement d expiration | Refus brutal au 31e jour, sans preavis | 2 | ouvert |
 | D06 | Binaire non signe | SmartScreen, antivirus, confiance de l acheteur | 2 | assume |
