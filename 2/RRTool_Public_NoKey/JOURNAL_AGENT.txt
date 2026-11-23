@@ -127,3 +127,9 @@ OUVERT
   Appel du script hyperviseur avec -NoReboot et controle du code retour, try/catch sur la licence.
   Test reel: racine propre, raccourci vers 1_run\START.bat, docs reduits a INSTALLATION_CLIENT.md.
   START.bat: titre de fenetre RRTool remplace par Dreww. Document: chemin 1_run\START.bat.
+
+2026-11-23 Installation validee de bout en bout
+  Copie conforme (hachage identique), lancement depuis C:\Dreww, payload cree dans 1_run\payload,
+  overlay fonctionnel en jeu.
+  Defaut corrige: le raccourci visait START.bat qui ne mappe pas le driver; il vise FFLoader.exe.
+  Document aligne: raccourci ou FFLoader; START.bat signale comme ne mappant pas le driver.
