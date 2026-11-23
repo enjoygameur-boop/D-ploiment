@@ -100,3 +100,11 @@ OUVERT
   fichier originel deplace vers Cheats\_archive\originel avec README_ARCHIVE.txt, _archive ignore.
   keygen.ps1: 30 jours par defaut. En-tete loader.cpp corrige, SINGLE_BUILD.md marque obsolete.
   2_src_port/RobRunAIO.exe sorti du suivi.
+
+2026-11-23 D01 attenue: empreinte dupliquee
+  lic_bind garde l empreinte dans bind.dat et sous HKLM\SOFTWARE\Dreww valeur Bind.
+  Lecture en union, ecriture sur les deux supports des qu il y a touche.
+  Tests: liaison ecrit les deux, suppression du seul fichier recree depuis le registre,
+  suppression de la seule valeur recree depuis le fichier, empreinte etrangere refusee en 10.
+  Reste ouvert: effacer les deux supports libere la place.
+  AIO reconstruit, _wl.txt mis a jour (2546176 00E825936572F743).

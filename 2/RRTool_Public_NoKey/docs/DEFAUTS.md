@@ -5,7 +5,7 @@ Un defaut ferme reste liste avec sa date de fermeture: il documente une decision
 
 | ID | Defaut | Effet | Gravite | Etat |
 |---|---|---|---|---|
-| D01 | `bind.dat` n est pas signe et peut etre supprime | Effacer le fichier remet la place a zero: l acheteur peut revendre la meme licence | 1 | ouvert |
+| D01 | `bind.dat` n est pas signe et peut etre supprime | Effacer le fichier remet la place a zero; une copie registre le compense, effacer les deux remet la place a zero | 1 | attenue 2026-11-23 |
 | D02 | L anti-recul ecrit sous HKLM | Si le processus n est pas eleve, l ecriture echoue et le controle est inoperant | 2 | ouvert |
 | D03 | Aucun flux d activation | L empreinte se lit a la main dans le registre ou dans la fenetre de refus | 2 | ouvert |
 | D04 | L empreinte derive du MachineGuid | Reinstallation de Windows = nouveau jeton obligatoire | 2 | assume |

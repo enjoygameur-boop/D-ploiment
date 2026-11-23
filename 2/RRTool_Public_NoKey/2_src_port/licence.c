@@ -204,7 +204,6 @@ int lic_check(void) {
     if (!lic_rollback(now)) return 7;
     return 0;
 }
-#define LIC_BIND_SLOTS 1
 
 static int lic_bind_path(wchar_t* dir, wchar_t* lp, wchar_t* bp, wchar_t* tp) {
     wchar_t base[MAX_PATH];
@@ -217,9 +216,73 @@ static int lic_bind_path(wchar_t* dir, wchar_t* lp, wchar_t* bp, wchar_t* tp) {
     _snwprintf_s(tp, MAX_PATH, _TRUNCATE, L"%s\\bind.tmp", dir);
     return 1;
 }
+#define LIC_BIND_SLOTS 1
+
+static void lic_slots_add(unsigned char* slots, int* count, const unsigned char* fp) {
+    int i;
+    for (i = 0; i < *count; ++i) if (memcmp(slots + i * 16, fp, 16) == 0) return;
+    if (*count >= LIC_BIND_SLOTS) return;
+    memcpy(slots + (*count) * 16, fp, 16);
+    ++(*count);
+}
+
+static void lic_slots_file(const wchar_t* path, unsigned char* slots, int* count) {
+    HANDLE h;
+    unsigned char rd[5 + LIC_BIND_SLOTS * 16];
+    DWORD got = 0;
+    int i, n;
+
+    h = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (h == INVALID_HANDLE_VALUE) return;
+    if (ReadFile(h, rd, sizeof(rd), &got, NULL) && got >= 5 && memcmp(rd, "RRB1", 4) == 0) {
+        n = rd[4];
+        if (n > LIC_BIND_SLOTS) n = LIC_BIND_SLOTS;
+        for (i = 0; i < n; ++i) lic_slots_add(slots, count, rd + 5 + i * 16);
+    }
+    CloseHandle(h);
+}
+
+static void lic_slots_reg(unsigned char* slots, int* count) {
+    HKEY k;
+    unsigned char rd[5 + LIC_BIND_SLOTS * 16];
+    DWORD type = 0, cb = sizeof(rd);
+    int i, n;
+
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, LIC_REG, 0, KEY_READ | KEY_WOW64_64KEY, &k) != ERROR_SUCCESS) return;
+    if (RegQueryValueExW(k, L"Bind", NULL, &type, rd, &cb) == ERROR_SUCCESS && type == REG_BINARY &&
+        cb >= 5 && memcmp(rd, "RRB1", 4) == 0) {
+        n = rd[4];
+        if (n > LIC_BIND_SLOTS) n = LIC_BIND_SLOTS;
+        for (i = 0; i < n; ++i) lic_slots_add(slots, count, rd + 5 + i * 16);
+    }
+    RegCloseKey(k);
+}
+
+static void lic_slots_save(const wchar_t* path, const unsigned char* slots, int count) {
+    unsigned char out[5 + LIC_BIND_SLOTS * 16];
+    HKEY k;
+    DWORD disp = 0, wr = 0;
+    HANDLE h;
+
+    memcpy(out, "RRB1", 4);
+    out[4] = (unsigned char)count;
+    memcpy(out + 5, slots, (size_t)count * 16);
+
+    h = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h != INVALID_HANDLE_VALUE) {
+        WriteFile(h, out, 5 + (DWORD)count * 16, &wr, NULL);
+        CloseHandle(h);
+    }
+    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, LIC_REG, 0, NULL, 0, KEY_WRITE | KEY_WOW64_64KEY,
+                        NULL, &k, &disp) == ERROR_SUCCESS) {
+        RegSetValueExW(k, L"Bind", 0, REG_BINARY, out, 5 + (DWORD)count * 16);
+        RegCloseKey(k);
+    }
+}
 
 /* A3: un jeton joker se fige sur la premiere machine qui le presente.
- * L empreinte vue est gardee dans bind.dat, une seule place.
+ * L empreinte est gardee a deux endroits, bind.dat et HKLM\SOFTWARE\Dreww\Bind,
+ * pour qu effacer l un ne suffise pas a liberer la place.
  * Renvoie 0 si la machine est autorisee, 1 sinon.
  */
 int lic_bind(void) {
@@ -228,10 +291,8 @@ int lic_bind(void) {
     unsigned char tok[128];
     unsigned char fp[16];
     unsigned char slots[LIC_BIND_SLOTS * 16];
-    unsigned char out[5 + LIC_BIND_SLOTS * 16];
-    unsigned char rd[5 + LIC_BIND_SLOTS * 16];
-    DWORD got = 0, rgot = 0, wr = 0;
     int len = 0, tn = 0, count = 0, hit = 0, i;
+    DWORD got = 0;
     HANDLE h;
 
     if (!lic_bind_path(dir, lp, bp, tp)) return 1;
@@ -257,32 +318,15 @@ int lic_bind(void) {
     }
 
     memset(slots, 0, sizeof(slots));
-    h = CreateFileW(bp, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    if (h != INVALID_HANDLE_VALUE) {
-        if (ReadFile(h, rd, sizeof(rd), &rgot, NULL) && rgot >= 5 &&
-            memcmp(rd, "RRB1", 4) == 0) {
-            count = rd[4];
-            if (count > LIC_BIND_SLOTS) count = LIC_BIND_SLOTS;
-            memcpy(slots, rd + 5, (size_t)count * 16);
-        }
-        CloseHandle(h);
-    }
+    lic_slots_file(bp, slots, &count);
+    lic_slots_reg(slots, &count);
     for (i = 0; i < count; ++i)
         if (memcmp(slots + i * 16, fp, 16) == 0) hit = 1;
-    if (hit) return 0;
+    if (hit) { CreateDirectoryW(dir, NULL); lic_slots_save(bp, slots, count); return 0; }
     if (count >= LIC_BIND_SLOTS) return 1;
 
-    memcpy(slots + count * 16, fp, 16);
-    ++count;
-    memcpy(out, "RRB1", 4);
-    out[4] = (unsigned char)count;
-    memcpy(out + 5, slots, (size_t)count * 16);
-
+    lic_slots_add(slots, &count, fp);
     CreateDirectoryW(dir, NULL);
-    h = CreateFileW(tp, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (h == INVALID_HANDLE_VALUE) return 1;
-    if (!WriteFile(h, out, 5 + (DWORD)count * 16, &wr, NULL)) { CloseHandle(h); return 1; }
-    CloseHandle(h);
-    if (!MoveFileExW(tp, bp, MOVEFILE_REPLACE_EXISTING)) return 1;
+    lic_slots_save(bp, slots, count);
     return 0;
 }
