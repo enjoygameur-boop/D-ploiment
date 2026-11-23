@@ -154,21 +154,24 @@ static void fail(const wchar_t* fmt, ...) {
     log_add(L"FAILED: %s", buf);
     if (g_wnd) SetWindowTextW(g_status, L"Failed. See the message.");
     pump();
-    MessageBoxW(g_wnd, buf, L"Felonious Funnery", MB_ICONERROR | MB_OK | MB_SETFOREGROUND);
+    MessageBoxW(g_wnd, buf, L"Dreww", MB_ICONERROR | MB_OK | MB_SETFOREGROUND);
     ExitProcess(1);
 }
 
-/* Brand palette (Felonious Funnery). */
+/* Brand palette (Dreww). */
 #define C_BG     RGB(8, 9, 13)
 #define C_SURF   RGB(16, 18, 24)
 #define C_LINE   RGB(42, 47, 60)
-#define C_LIME   RGB(165, 255, 54)
-#define C_PURPLE RGB(155, 92, 255)
+#define C_LIME   RGB(255, 107, 26)
+#define C_PURPLE RGB(255, 150, 80)
 #define C_INK    RGB(245, 245, 247)
 #define C_MUTE   RGB(146, 152, 165)
 
 static HFONT   g_f_brand = NULL, g_f_brand_small = NULL, g_f_status = NULL, g_f_log = NULL;
 static HBRUSH  g_log_brush = NULL;
+static HBRUSH  g_status_brush = NULL;
+static HBITMAP  g_brand_bmp = NULL;
+static int      g_brand_w = 0, g_brand_h = 0;
 static int     g_fonts_loaded = 0;
 
 static void add_mem_font(int id) {
@@ -203,37 +206,29 @@ static void load_brand_fonts(void) {
                           CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Inter");
 }
 
-/* Hexagon emblem with the two F glyphs, drawn with GDI. */
+/* Rounded emblem tile with the D glyph, drawn with GDI. */
 static void draw_emblem(HDC dc, int x, int y, int s) {
-    POINT p[6];
     HBRUSH fb, oldb;
     HPEN pen, oldp;
     HFONT f, oldf;
-    p[0].x = x + s / 2;       p[0].y = y + 1;
-    p[1].x = x + s - 2;       p[1].y = y + s / 4;
-    p[2].x = x + s - 2;       p[2].y = y + 3 * s / 4;
-    p[3].x = x + s / 2;       p[3].y = y + s - 1;
-    p[4].x = x + 2;           p[4].y = y + 3 * s / 4;
-    p[5].x = x + 2;           p[5].y = y + s / 4;
+
     fb = CreateSolidBrush(C_SURF);
     pen = CreatePen(PS_SOLID, 2, C_LIME);
     oldb = (HBRUSH)SelectObject(dc, fb);
     oldp = (HPEN)SelectObject(dc, pen);
-    Polygon(dc, p, 6);
+    RoundRect(dc, x, y, x + s, y + s, 10, 10);
     SelectObject(dc, oldb);
     SelectObject(dc, oldp);
     DeleteObject(fb);
     DeleteObject(pen);
 
-    f = CreateFontW(-(s * 42 / 100), 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET,
+    f = CreateFontW(-(s * 46 / 100), 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET,
                     OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
                     DEFAULT_PITCH, L"Space Grotesk");
     oldf = (HFONT)SelectObject(dc, f);
     SetBkMode(dc, TRANSPARENT);
     SetTextColor(dc, C_LIME);
-    TextOutW(dc, x + s * 16 / 100, y + s * 24 / 100, L"F", 1);
-    SetTextColor(dc, C_PURPLE);
-    TextOutW(dc, x + s * 43 / 100, y + s * 24 / 100, L"F", 1);
+    TextOutW(dc, x + s * 30 / 100, y + s * 18 / 100, L"D", 1);
     SelectObject(dc, oldf);
     DeleteObject(f);
 }
@@ -245,7 +240,7 @@ static void paint_window(HWND h) {
     TRIVERTEX tv[2];
     GRADIENT_RECT gr;
     int s = 38, tx = 24 + 38 + 14;
-    SIZE word = { 0, 0 };
+    SIZE word = { 0, 0 }, act = { 0, 0 };
     HPEN pen, oldp;
     HBRUSH nullb, oldb;
     HFONT oldf;
@@ -258,47 +253,51 @@ static void paint_window(HWND h) {
     gr.UpperLeft = 0; gr.LowerRight = 1;
     GradientFill(dc, tv, 2, &gr, 1, GRADIENT_FILL_RECT_V);
 
-    draw_emblem(dc, 24, 22, s);
+    if (g_brand_bmp) { HDC md = CreateCompatibleDC(dc); HGDIOBJ ob = SelectObject(md, g_brand_bmp); BLENDFUNCTION bf = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA }; AlphaBlend(dc, 24, 22, s, s, md, 0, 0, g_brand_w, g_brand_h, bf); SelectObject(md, ob); DeleteDC(md); } else { draw_emblem(dc, 24, 22, s); }
 
     SetBkMode(dc, TRANSPARENT);
     oldf = (HFONT)SelectObject(dc, g_f_brand);
     SetTextCharacterExtra(dc, 2);
-    GetTextExtentPoint32W(dc, L"FELONIOUS ", 10, &word);
+    GetTextExtentPoint32W(dc, L"DRE ", 4, &word);
     SetTextColor(dc, C_INK);
-    TextOutW(dc, tx, 26, L"FELONIOUS", 9);
+    TextOutW(dc, tx, 26, L"DRE", 3);
     SetTextColor(dc, C_LIME);
-    TextOutW(dc, tx + word.cx, 26, L"FUNNERY", 7);
+    TextOutW(dc, tx + word.cx, 26, L"WW", 2);
     SetTextCharacterExtra(dc, 0);
     SelectObject(dc, g_f_brand_small);
     SetTextColor(dc, C_MUTE);
-    TextOutW(dc, tx, 50, L"ROB RUN  //  PRIVATE BUILD", 26);
+    TextOutW(dc, tx, 50, L"ROB RUN  //  LICENSED", 21);
+    SetTextCharacterExtra(dc, 2);
+    GetTextExtentPoint32W(dc, L"ACTIVITY", 8, &act);
+    TextOutW(dc, rc.right - 24 - act.cx - 8, 106, L"ACTIVITY", 8);
+    SetTextCharacterExtra(dc, 0);
     SelectObject(dc, oldf);
 
     pen = CreatePen(PS_SOLID, 1, C_LINE);
     oldp = (HPEN)SelectObject(dc, pen);
-
-    MoveToEx(dc, 24, 78, NULL);
-    LineTo(dc, rc.right - 24, 78);
-
     nullb = (HBRUSH)GetStockObject(NULL_BRUSH);
     oldb = (HBRUSH)SelectObject(dc, nullb);
-    RoundRect(dc, 22, 112, rc.right - 22, rc.bottom - 36, 12, 12);
+    RoundRect(dc, 22, 120, rc.right - 22, rc.bottom - 40, 12, 12);
     SelectObject(dc, oldb);
-
-    MoveToEx(dc, 24, rc.bottom - 38, NULL);
-    LineTo(dc, rc.right - 24, rc.bottom - 38);
+    MoveToEx(dc, 24, rc.bottom - 34, NULL);
+    LineTo(dc, rc.right - 24, rc.bottom - 34);
     SelectObject(dc, oldp);
     DeleteObject(pen);
 
     oldf = (HFONT)SelectObject(dc, g_f_brand_small);
     SetTextColor(dc, C_MUTE);
     SetTextCharacterExtra(dc, 2);
-    TextOutW(dc, 24, rc.bottom - 26, L"FELONIOUS FUNNERY", 17);
+    TextOutW(dc, 24, rc.bottom - 24, L"DREWW", 5);
+    GetTextExtentPoint32W(dc, L"v1.0.0", 6, &word);
+    TextOutW(dc, rc.right - 24 - word.cx, rc.bottom - 24, L"v1.0.0", 6);
+    GetTextExtentPoint32W(dc, L"v1.0.0", 6, &word);
+    TextOutW(dc, rc.right - 24 - word.cx, rc.bottom - 24, L"v1.0.0", 6);
     SetTextCharacterExtra(dc, 0);
     SelectObject(dc, oldf);
 
     EndPaint(h, &ps);
 }
+
 
 static LRESULT CALLBACK wnd_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
     switch (msg) {
@@ -306,14 +305,15 @@ static LRESULT CALLBACK wnd_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
         RECT rc;
         load_brand_fonts();
         g_log_brush = CreateSolidBrush(C_SURF);
+        g_status_brush = CreateSolidBrush(RGB(11, 14, 19));
         GetClientRect(h, &rc);
         g_status = CreateWindowExW(0, L"STATIC", L"Starting...",
                                    WS_CHILD | WS_VISIBLE | SS_LEFT,
-                                   24, 86, rc.right - 48, 22, h, NULL, NULL, NULL);
+                                   24, 80, rc.right - 48, 20, h, NULL, NULL, NULL);
         g_log = CreateWindowExW(0, L"EDIT", L"",
                                 WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE |
                                 ES_READONLY | ES_AUTOVSCROLL,
-                                24, 116, rc.right - 48, rc.bottom - 156, h, NULL, NULL, NULL);
+                                24, 126, rc.right - 48, rc.bottom - 172, h, NULL, NULL, NULL);
         if (g_f_status) SendMessageW(g_status, WM_SETFONT, (WPARAM)g_f_status, TRUE);
         if (g_f_log) SendMessageW(g_log, WM_SETFONT, (WPARAM)g_f_log, TRUE);
         return 0;
@@ -321,8 +321,8 @@ static LRESULT CALLBACK wnd_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_SIZE: {
         RECT rc;
         GetClientRect(h, &rc);
-        if (g_status) MoveWindow(g_status, 24, 86, rc.right - 48, 22, TRUE);
-        if (g_log) MoveWindow(g_log, 24, 116, rc.right - 48, rc.bottom - 156, TRUE);
+        if (g_status) MoveWindow(g_status, 24, 80, rc.right - 48, 20, TRUE);
+        if (g_log) MoveWindow(g_log, 24, 126, rc.right - 48, rc.bottom - 172, TRUE);
         return 0;
     }
     case WM_ERASEBKGND:
@@ -335,11 +335,13 @@ static LRESULT CALLBACK wnd_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
         if ((HWND)lp == g_log) {
             SetTextColor(dc, C_MUTE);
             SetBkColor(dc, C_SURF);
+    SetBkMode(dc, OPAQUE);
             return (LRESULT)g_log_brush;
         }
-        SetBkMode(dc, TRANSPARENT);
+        SetBkMode(dc, OPAQUE);
+        SetBkColor(dc, RGB(11, 14, 19));
         SetTextColor(dc, C_LIME);
-        return (LRESULT)GetStockObject(NULL_BRUSH);
+        return (LRESULT)g_status_brush;
     }
     case WM_CLOSE:
         /* Closing the window cancels the sequence and leaves the system as it
@@ -365,7 +367,7 @@ static void create_window(HINSTANCE inst, const wchar_t* title) {
     int x = (GetSystemMetrics(SM_CXSCREEN) - w) / 2;
     int y = (GetSystemMetrics(SM_CYSCREEN) - h) / 2;
     g_wnd = CreateWindowExW(WS_EX_APPWINDOW, L"RobRunAioLauncher",
-                            title ? title : L"Felonious Funnery",
+                            title ? title : L"Dreww",
                             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
                             x, y, w, h, NULL, NULL, inst, NULL);
     if (g_wnd) {
@@ -401,7 +403,7 @@ static void ensure_dir(const wchar_t* path) {
 
 static int dir_writable(const wchar_t* dir) {
     wchar_t probe[MAX_PATH * 2];
-    path_join(dir, L"~aio_write_test.tmp", probe, _countof(probe));
+    path_join(dir, L"aio_write_test.tmp", probe, _countof(probe));
     HANDLE h = CreateFileW(probe, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                            FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
     if (h == INVALID_HANDLE_VALUE) return 0;
@@ -1492,7 +1494,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
 
     HANDLE single = CreateMutexW(NULL, TRUE, L"Global\\RobRunAIO");
     if (single && GetLastError() == ERROR_ALREADY_EXISTS) {
-        MessageBoxW(NULL, L"Felonious Funnery is already running.", L"Felonious Funnery",
+        MessageBoxW(NULL, L"Dreww is already running.", L"Dreww",
                     MB_ICONINFORMATION | MB_OK);
         return 0;
     }
@@ -1502,11 +1504,11 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
         if (masq_child) {
             exe_base_name(title, _countof(title));
         } else {
-            wcsncpy_s(title, _countof(title), L"Felonious Funnery  \u2014  Rob Run", _TRUNCATE);
+            wcsncpy_s(title, _countof(title), L"Dreww  \u2014  Rob Run", _TRUNCATE);
         }
         create_window(inst, title);
     }
-    log_add(L"Felonious Funnery  \u2014  Rob Run%s", selftest ? L" (selftest)" : L"");
+    log_add(L"Dreww  \u2014  Rob Run%s", selftest ? L" (selftest)" : L"");
 
     /* Run after the payload folder exists so the findings land in aio.log. */
     check_virtualization(ignore_vbs, selftest);

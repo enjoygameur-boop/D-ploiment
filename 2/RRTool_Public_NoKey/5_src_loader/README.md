@@ -19,7 +19,7 @@ If no payload is found it reports that instead of failing silently.
 build_loader.bat
 ```
 
-Output: `FFLoader.exe` in this folder. The manifest requests administrator.
+Output: `FFLoader.exe` in this folder. The manifest runs the loader as invoker; the payload itself is started with runas.
 
 ## Layout
 

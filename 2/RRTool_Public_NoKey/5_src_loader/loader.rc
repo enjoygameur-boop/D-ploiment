@@ -1,6 +1,34 @@
 #include "brand_resources.h"
+#include <winver.h>
 1 ICON "brand\\brand.ico"
 IDR_BRAND_PNG  RCDATA "brand\\brand.png"
 IDR_FONT_SPACE RCDATA "brand\\SpaceGrotesk.ttf"
 IDR_FONT_INTER RCDATA "brand\\Inter.ttf"
 1 24 "loader.manifest"
+
+
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "CompanyName", "Dreww"
+      VALUE "FileDescription", "Dreww - Rob Run loader"
+      VALUE "FileVersion", "1.0.0.0"
+      VALUE "InternalName", "FFLoader"
+      VALUE "OriginalFilename", "FFLoader.exe"
+      VALUE "ProductName", "Dreww"
+      VALUE "ProductVersion", "1.0.0.0"
+      VALUE "LegalCopyright", "Dreww"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END

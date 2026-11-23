@@ -1,4 +1,4 @@
-﻿/* loader.cpp - Felonious Funnery public loader.
+﻿/* loader.cpp - Dreww loader.
  *
  * Key-free build: no license server, no key field, no cached credentials.
  * It finds RobRunAIO.exe beside itself (or in payload\) and starts it elevated.
@@ -178,83 +178,85 @@ static void paint_ui(HWND hwnd) {
     g.SetSmoothingMode(SmoothingModeAntiAlias);
     g.SetTextRenderingHint(TextRenderingHintClearTypeGridFit);
 
-    LinearGradientBrush bg(Point(0, 0), Point(0, rc.bottom), Color(255, 12, 15, 20), Color(255, 8, 9, 13));
+    LinearGradientBrush bg(Point(0, 0), Point(0, rc.bottom), Color(255, 13, 16, 21), Color(255, 8, 9, 13));
     g.FillRectangle(&bg, 0, 0, rc.right, rc.bottom);
 
-    SolidBrush lime_glow(Color(20, 165, 255, 54));
-    g.FillEllipse(&lime_glow, rc.right - S(230), -S(110), S(300), S(300));
-    SolidBrush purple_glow(Color(24, 155, 92, 255));
-    g.FillEllipse(&purple_glow, -S(130), rc.bottom - S(230), S(340), S(340));
+    LinearGradientBrush rail(Point(0, 0), Point(S(5), 0), Color(255, 255, 107, 26), Color(0, 255, 107, 26));
+    g.FillRectangle(&rail, 0, 0, S(5), rc.bottom);
 
     if (g_logo) {
-        g.DrawImage(g_logo, RectF((REAL)S(24), (REAL)S(22), (REAL)S(38), (REAL)S(38)));
+        g.DrawImage(g_logo, RectF((REAL)S(26), (REAL)S(28), (REAL)S(32), (REAL)S(32)));
     }
 
-    Pen divider(Color(255, 42, 47, 60), 1.0f);
-    g.DrawLine(&divider, (REAL)S(24), (REAL)S(78), (REAL)(rc.right - S(24)), (REAL)S(78));
+    int bx0 = rc.right - S(170);
+    int by0 = S(24);
+    int bw = S(140);
+    int bh = rc.bottom - S(70);
 
-    RectF button((REAL)S(32), (REAL)S(190), (REAL)(rc.right - S(64)), (REAL)S(64));
-    Color fill = g_busy ? Color(255, 120, 140, 90)
-               : g_hover ? Color(255, 190, 255, 110)
-               : Color(255, 165, 255, 54);
-    round_rect(g, button, (float)S(10), fill, Color(0, 0, 0, 0));
+    Pen divider(Color(255, 38, 43, 56), 1.0f);
+    g.DrawLine(&divider, (REAL)(bx0 - S(22)), (REAL)S(24), (REAL)(bx0 - S(22)), (REAL)(rc.bottom - S(46)));
+
+    RectF button((REAL)bx0, (REAL)by0, (REAL)bw, (REAL)bh);
+    Color fill = g_busy ? Color(255, 198, 88, 30)
+               : g_hover ? Color(255, 255, 152, 82)
+               : Color(255, 255, 107, 26);
+    round_rect(g, button, (float)S(8), fill, Color(0, 0, 0, 0));
 
     HDC hdc = g.GetHDC();
     SetBkMode(hdc, TRANSPARENT);
 
     HFONT old = (HFONT)SelectObject(hdc, g_f_brand);
-    SetTextCharacterExtra(hdc, S(2));
+    SetTextCharacterExtra(hdc, S(3));
     SIZE words = {};
-    GetTextExtentPoint32W(hdc, L"FELONIOUS ", 10, &words);
+    GetTextExtentPoint32W(hdc, L"DRE ", 4, &words);
     SetTextColor(hdc, RGB(245, 245, 247));
-    draw_text(hdc, S(76), S(26), L"FELONIOUS");
-    SetTextColor(hdc, RGB(165, 255, 54));
-    draw_text(hdc, S(76) + words.cx, S(26), L"FUNNERY");
+    draw_text(hdc, S(70), S(26), L"DRE");
+    SetTextColor(hdc, RGB(255, 107, 26));
+    draw_text(hdc, S(70) + words.cx, S(26), L"WW");
     SetTextCharacterExtra(hdc, 0);
     SelectObject(hdc, g_f_brand_small);
-    SetTextColor(hdc, RGB(146, 152, 165));
-    draw_text(hdc, S(76), S(50), L"ROB RUN  //  PUBLIC BUILD");
+    SetTextColor(hdc, RGB(138, 144, 158));
+    draw_text(hdc, S(70), S(50), L"ROB RUN  //  LICENSED");
 
     SelectObject(hdc, g_f_eyebrow);
-    SetTextColor(hdc, RGB(146, 152, 165));
+    SetTextColor(hdc, RGB(138, 144, 158));
     SetTextCharacterExtra(hdc, S(2));
-    draw_text(hdc, S(32), S(102), L"STATUS");
+    draw_text(hdc, S(70), S(86), L"STATUS");
     SetTextCharacterExtra(hdc, 0);
 
     SelectObject(hdc, g_f_body);
     SetTextColor(hdc, g_status_error ? RGB(255, 70, 85) : RGB(245, 245, 247));
-    RECT sr = { S(32), S(120), rc.right - S(32), S(170) };
+    RECT sr = { S(70), S(102), bx0 - S(30), S(176) };
     DrawTextW(hdc, g_status.c_str(), -1, &sr, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
 
     SelectObject(hdc, g_f_button);
     SetTextColor(hdc, RGB(8, 9, 13));
     SIZE label = {};
     GetTextExtentPoint32W(hdc, L"LAUNCH", 6, &label);
-    int bx = (int)button.X + ((int)button.Width - label.cx) / 2;
-    int by = (int)button.Y + ((int)button.Height - label.cy) / 2;
-    draw_text(hdc, bx, by, L"LAUNCH");
+    draw_text(hdc, bx0 + (bw - label.cx) / 2, by0 + (bh - label.cy) / 2, L"LAUNCH");
 
     SelectObject(hdc, g_f_body);
-    SetTextColor(hdc, RGB(146, 152, 165));
-    draw_text(hdc, S(32), S(272), L"Keep RobRunAIO.exe beside this loader. It starts elevated.");
+    SetTextColor(hdc, RGB(138, 144, 158));
+    draw_text(hdc, S(70), rc.bottom - S(58), L"Keep RobRunAIO.exe beside this loader. It starts elevated.");
 
     SelectObject(hdc, g_f_brand_small);
-    SetTextColor(hdc, RGB(146, 152, 165));
+    SetTextColor(hdc, RGB(120, 126, 140));
     SetTextCharacterExtra(hdc, S(2));
-    draw_text(hdc, S(24), rc.bottom - S(30), L"FELONIOUS FUNNERY");
+    draw_text(hdc, S(26), rc.bottom - S(26), L"DREWW");
     SIZE right = {};
-    GetTextExtentPoint32W(hdc, L"PUBLIC BUILD", 12, &right);
-    draw_text(hdc, rc.right - S(24) - right.cx, rc.bottom - S(30), L"PUBLIC BUILD");
+    GetTextExtentPoint32W(hdc, L"v1.0.0", 6, &right);
+    draw_text(hdc, rc.right - S(30) - right.cx, rc.bottom - S(26), L"v1.0.0");
     SetTextCharacterExtra(hdc, 0);
 
     SelectObject(hdc, old);
     g.ReleaseHDC(hdc);
 
-    Pen footer_line(Color(255, 42, 47, 60), 1.0f);
-    g.DrawLine(&footer_line, (REAL)S(24), (REAL)(rc.bottom - S(44)), (REAL)(rc.right - S(24)), (REAL)(rc.bottom - S(44)));
+    Pen footer_line(Color(255, 38, 43, 56), 1.0f);
+    g.DrawLine(&footer_line, (REAL)S(26), (REAL)(rc.bottom - S(34)), (REAL)(rc.right - S(30)), (REAL)(rc.bottom - S(34)));
 
     EndPaint(hwnd, &ps);
 }
+
 
 static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     switch (msg) {
@@ -271,7 +273,7 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         RECT rc;
         GetClientRect(hwnd, &rc);
         POINT pt = { GET_X_LPARAM(lp), GET_Y_LPARAM(lp) };
-        RECT button = { S(32), S(190), rc.right - S(32), S(254) };
+        RECT button = { rc.right - S(170), S(24), rc.right - S(30), rc.bottom - S(46) };
         bool hover = PtInRect(&button, pt) != FALSE;
         if (hover != g_hover) {
             g_hover = hover;
@@ -297,7 +299,7 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_LBUTTONDOWN: {
         RECT rc;
         GetClientRect(hwnd, &rc);
-        RECT button = { S(32), S(190), rc.right - S(32), S(254) };
+        RECT button = { rc.right - S(170), S(24), rc.right - S(30), rc.bottom - S(46) };
         POINT pt = { GET_X_LPARAM(lp), GET_Y_LPARAM(lp) };
         if (PtInRect(&button, pt)) start_launch(hwnd);
         return 0;
@@ -328,13 +330,13 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, LPWSTR, int) {
     wc.hCursor = LoadCursorW(nullptr, (LPCWSTR)IDC_ARROW);
     wc.hIcon = LoadIconW(inst, MAKEINTRESOURCEW(1));
     wc.hbrBackground = nullptr;
-    wc.lpszClassName = L"FeloniousLoader";
+    wc.lpszClassName = L"DrewwLoader";
     RegisterClassW(&wc);
 
-    int w = 560, h = 430;
+    int w = 640, h = 250;
     int x = (GetSystemMetrics(SM_CXSCREEN) - w) / 2;
     int y = (GetSystemMetrics(SM_CYSCREEN) - h) / 2;
-    g_hwnd = CreateWindowExW(0, wc.lpszClassName, L"Felonious Funnery  \u2014  Rob Run",
+    g_hwnd = CreateWindowExW(0, wc.lpszClassName, L"Dreww  \u2014  Rob Run",
                              WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
                              x, y, w, h, nullptr, nullptr, inst, nullptr);
     if (!g_hwnd) return 1;

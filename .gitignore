@@ -3,3 +3,8 @@ tools/
 *.obj
 *.res
 *.zip
+*.orig
+ba.txt
+bp.txt
+build_aio_out.txt
+_inv.txt

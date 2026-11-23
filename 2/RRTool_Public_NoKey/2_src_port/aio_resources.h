@@ -11,4 +11,7 @@
 #define AIO_RCDATA_OVERLAY  103   /* RobRunPort.exe     - the overlay          */
 #define AIO_RCDATA_WEBVIEW2 104   /* WebView2Loader.dll - required beside exe  */
 
+#define AIO_BITMAP_BRAND  105   /* emblem tile - header logo */
+
+
 #endif
