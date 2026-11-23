@@ -146,3 +146,8 @@ OUVERT
   Restent: manuel utilisateur, defauts D02 D03 D05 D10 D15.
 
 2026-11-23 D15 classe sans suite: pas de desinstalleur pour l instant.
+
+2026-11-23 Rangement de la racine
+  _scratch cree: 30 brouillons _*.txt, 4 journaux de build et kill.ps1 deplaces par git mv.
+  _wl.txt reste a la racine (manifeste de hachages). Aucun script ne citait les fichiers deplaces.
+  .gitignore: _scratch/build_*.txt.
