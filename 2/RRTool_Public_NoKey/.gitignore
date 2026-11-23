@@ -18,3 +18,5 @@ desktop.ini
 1_run/masq.txt
 build_aio_err.txt
 build_port_err.txt
+2_src_port/RobRunAIO.exe
+_archive/
