@@ -182,3 +182,7 @@ OUVERT
 2026-11-23 setup/2_creer_dossier.ps1 retire
   L installateur cree le dossier de licence; le script etait devenu redondant et n etait plus cite.
   setup/ ne garde que 1_couper_hyperviseur.ps1, utilise par l installateur et en reparation.
+
+2026-11-23 Manuel utilisateur classe
+  Ecrit et livre par l utilisateur au moment de l achat.
+  Reste hors de docs/ pour ne pas concurrencer le document d installation dans le dossier remis.
