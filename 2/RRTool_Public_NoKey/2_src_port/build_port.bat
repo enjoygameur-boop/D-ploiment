@@ -36,6 +36,7 @@ set "CXXFLAGS=/nologo /O2 /D_CRT_SECURE_NO_WARNINGS /W3 /MT /EHsc"
 
 echo [1/9] rr_esp.c
 cl %CFLAGS% /c rr_esp.c /Fo:rr_esp.obj || goto fail
+cl %CFLAGS% /c licence.c /Fo:licence.obj || goto fail
 echo [2/9] rr_game.c
 cl %CFLAGS% /c rr_game.c /Fo:rr_game.obj || goto fail
 echo [3/9] rr_mem.c
@@ -66,9 +67,9 @@ link /nologo /SUBSYSTEM:WINDOWS /MACHINE:X64 /OUT:RobRunPort.exe ^
   rr_esp.obj rr_game.obj rr_mem.obj rr_unity.obj rr_chain.obj rr_draw.obj rr_aim.obj ^
   rr_los_geom.obj rr_los_capture.obj rr_los_runtime.obj rr_los.obj rr_spawn.obj ^
  rr_nodescan.obj rr_classscan.obj rr_exp.obj rr_find.obj ^
-  gpu.obj menu_webview.obj app.res ^
+  gpu.obj menu_webview.obj licence.obj app.res ^
   kernel32.lib user32.lib gdi32.lib comctl32.lib advapi32.lib ole32.lib oleaut32.lib uuid.lib shell32.lib ws2_32.lib ^
-  d3d11.lib dxgi.lib d2d1.lib dwrite.lib dcomp.lib d3dcompiler.lib dbghelp.lib ^
+  bcrypt.lib d3d11.lib dxgi.lib d2d1.lib dwrite.lib dcomp.lib d3dcompiler.lib dbghelp.lib ^
   /LIBPATH:"%WV2%\lib\x64" WebView2Loader.dll.lib || goto fail
 
 if not exist WebView2Loader.dll copy /Y "%WV2%\lib\x64\WebView2Loader.dll" . >nul
@@ -81,3 +82,4 @@ exit /b 0
 :fail
 echo BUILD_FAIL
 exit /b 1
+

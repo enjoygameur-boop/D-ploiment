@@ -1546,13 +1546,21 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
     }
 
     {
+        wchar_t fphex[40] = L"";
         int lc = lic_check();
         if (lc) {
+            if (!lic_fingerprint_hex(fphex, 40)) wcscpy_s(fphex, 40, L"indisponible");
             log_add(L"licence: refusee (code %d)", lc);
-            fail(L"Licence absente ou invalide (code %d).\n\n%s\n\nFichier attendu:\n%%LOCALAPPDATA%%\\Dreww\\licence.dat",
-                 lc, lic_last_error(lc));
+            fail(L"Licence absente ou invalide (code %d).\n\n%s\n\nEmpreinte machine:\n%s\n\nFichier attendu:\n%%LOCALAPPDATA%%\\Dreww\\licence.dat",
+                 lc, lic_last_error(lc), fphex);
         }
         log_add(L"licence: OK");
+        if (lic_bind() == 1) {
+            wchar_t fpx[40] = L"";
+            if (!lic_fingerprint_hex(fpx, 40)) wcscpy_s(fpx, 40, L"indisponible");
+            log_add(L"liaison: quota atteint (%s)", fpx);
+            fail(L"Cette licence est deja liee a une autre machine.\n\nEmpreinte de celle-ci:\n%s", fpx);
+        }
     }
 
     ui_status(L"Extracting payload...");
@@ -1639,6 +1647,10 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
     log_add(L"done");
     return 0;
 }
+
+
+
+
 
 
 

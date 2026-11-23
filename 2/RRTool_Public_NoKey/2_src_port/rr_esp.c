@@ -39,6 +39,7 @@ static volatile LONG g_rescan_now = 0;
 #include "rr_los.h"
 #include "rr_find.h"
 #include "robrun_offsets.h"
+#include "licence.h"
 
 #pragma comment(lib, "winmm.lib")
 
@@ -2823,6 +2824,18 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
         return rc;
     }
 
+    {
+        int lc = lic_check();
+        if (!lc) lc = (lic_bind() == 1) ? 10 : 0;
+        if (lc) {
+            wchar_t msg[512];
+            _snwprintf_s(msg, _countof(msg), _TRUNCATE,
+                         L"Licence absente ou invalide (code %d).\n\n%s", lc, lic_last_error(lc));
+            MessageBoxW(NULL, msg, L"Dreww", MB_ICONERROR | MB_OK);
+            return 5;
+        }
+    }
+
     g_sw = GetSystemMetrics(SM_CXSCREEN);
     g_sh = GetSystemMetrics(SM_CYSCREEN);
 
@@ -2904,6 +2917,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
     rr_drv_close();
     return 0;
 }
+
 
 
 

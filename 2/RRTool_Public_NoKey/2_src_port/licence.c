@@ -44,10 +44,11 @@ static const wchar_t* kMsg[] = {
     L"licence expiree",
     L"horloge reculee",
     L"signature invalide",
-    L"crypto indisponible"
+    L"crypto indisponible",
+    L"licence deja liee a une autre machine"
 };
 const wchar_t* lic_last_error(int code) {
-    if (code < 0 || code > 9) return L"erreur inconnue";
+    if (code < 0 || code > 10) return L"erreur inconnue";
     return kMsg[code];
 }
 
@@ -117,6 +118,13 @@ static int lic_fingerprint(unsigned char out[16]) {
     memcpy(out, digest, 16);
     return 1;
 }
+
+int lic_fingerprint_hex(wchar_t* out, size_t cap) {
+    unsigned char fp[16];
+    if (!lic_fingerprint(fp) || cap < 33) return 0;
+    for (int i = 0; i < 16; ++i) swprintf_s(out + i * 2, cap - i * 2, L"%02X", fp[i]);
+    return 1;
+}
 static int lic_verify(const unsigned char* msg, int len, const unsigned char* sig) {
     BCRYPT_ALG_HANDLE hash = NULL, ecdsa = NULL;
     BCRYPT_KEY_HANDLE key = NULL;
@@ -182,7 +190,11 @@ int lic_check(void) {
     if (tok[0] != 0x52 || tok[1] != 0x52 || tok[2] != 0x4C || tok[3] != 0x31) return 4;
     if (tok[4] != LIC_VER) return 4;
     if (!lic_fingerprint(fp)) return 9;
-    if (memcmp(tok + 5, fp, 16) != 0) return 5;
+    {
+        int wild = 1;
+        for (int i = 0; i < 16; ++i) if (tok[5 + i] != 0xFF) { wild = 0; break; }
+        if (!wild && memcmp(tok + 5, fp, 16) != 0) return 5;
+    }
     now = lic_now();
     issued = *(long long*)(tok + 21);
     exp = *(long long*)(tok + 29);
@@ -192,5 +204,85 @@ int lic_check(void) {
     if (!lic_rollback(now)) return 7;
     return 0;
 }
+#define LIC_BIND_SLOTS 1
 
+static int lic_bind_path(wchar_t* dir, wchar_t* lp, wchar_t* bp, wchar_t* tp) {
+    wchar_t base[MAX_PATH];
+    DWORD n = GetEnvironmentVariableW(L"LOCALAPPDATA", base,
+                                      (DWORD)(sizeof(base) / sizeof(base[0])));
+    if (!n || n >= MAX_PATH) return 0;
+    _snwprintf_s(dir, MAX_PATH, _TRUNCATE, L"%s\\Dreww", base);
+    _snwprintf_s(lp, MAX_PATH, _TRUNCATE, L"%s\\licence.dat", dir);
+    _snwprintf_s(bp, MAX_PATH, _TRUNCATE, L"%s\\bind.dat", dir);
+    _snwprintf_s(tp, MAX_PATH, _TRUNCATE, L"%s\\bind.tmp", dir);
+    return 1;
+}
 
+/* A3: un jeton joker se fige sur la premiere machine qui le presente.
+ * L empreinte vue est gardee dans bind.dat, une seule place.
+ * Renvoie 0 si la machine est autorisee, 1 sinon.
+ */
+int lic_bind(void) {
+    wchar_t dir[MAX_PATH], lp[MAX_PATH], bp[MAX_PATH], tp[MAX_PATH];
+    char raw[512];
+    unsigned char tok[128];
+    unsigned char fp[16];
+    unsigned char slots[LIC_BIND_SLOTS * 16];
+    unsigned char out[5 + LIC_BIND_SLOTS * 16];
+    unsigned char rd[5 + LIC_BIND_SLOTS * 16];
+    DWORD got = 0, rgot = 0, wr = 0;
+    int len = 0, tn = 0, count = 0, hit = 0, i;
+    HANDLE h;
+
+    if (!lic_bind_path(dir, lp, bp, tp)) return 1;
+
+    h = CreateFileW(lp, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (h == INVALID_HANDLE_VALUE) return 1;
+    if (!ReadFile(h, raw, sizeof(raw) - 1, &got, NULL)) { CloseHandle(h); return 1; }
+    CloseHandle(h);
+    raw[got] = 0;
+    while (len < (int)got && raw[len] != 32 && raw[len] != 13 && raw[len] != 10) ++len;
+    if (len < LIC_PAYLOAD + LIC_SIG) return 1;
+    tn = b64_decode(raw, len, tok, sizeof(tok));
+    if (tn != LIC_PAYLOAD + LIC_SIG) return 1;
+    if (tok[0] != 0x52 || tok[1] != 0x52 || tok[2] != 0x4C || tok[3] != 0x31) return 1;
+    if (tok[4] != LIC_VER) return 1;
+    if (!lic_verify(tok, LIC_PAYLOAD, tok + LIC_PAYLOAD)) return 1;
+    if (!lic_fingerprint(fp)) return 1;
+
+    {
+        int wild = 1;
+        for (i = 0; i < 16; ++i) if (tok[5 + i] != 0xFF) { wild = 0; break; }
+        if (!wild) return memcmp(tok + 5, fp, 16) == 0 ? 0 : 1;
+    }
+
+    memset(slots, 0, sizeof(slots));
+    h = CreateFileW(bp, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (h != INVALID_HANDLE_VALUE) {
+        if (ReadFile(h, rd, sizeof(rd), &rgot, NULL) && rgot >= 5 &&
+            memcmp(rd, "RRB1", 4) == 0) {
+            count = rd[4];
+            if (count > LIC_BIND_SLOTS) count = LIC_BIND_SLOTS;
+            memcpy(slots, rd + 5, (size_t)count * 16);
+        }
+        CloseHandle(h);
+    }
+    for (i = 0; i < count; ++i)
+        if (memcmp(slots + i * 16, fp, 16) == 0) hit = 1;
+    if (hit) return 0;
+    if (count >= LIC_BIND_SLOTS) return 1;
+
+    memcpy(slots + count * 16, fp, 16);
+    ++count;
+    memcpy(out, "RRB1", 4);
+    out[4] = (unsigned char)count;
+    memcpy(out + 5, slots, (size_t)count * 16);
+
+    CreateDirectoryW(dir, NULL);
+    h = CreateFileW(tp, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h == INVALID_HANDLE_VALUE) return 1;
+    if (!WriteFile(h, out, 5 + (DWORD)count * 16, &wr, NULL)) { CloseHandle(h); return 1; }
+    CloseHandle(h);
+    if (!MoveFileExW(tp, bp, MOVEFILE_REPLACE_EXISTING)) return 1;
+    return 0;
+}

@@ -1,9 +1,9 @@
-param([int]$Days=7,[string]$Out="",[int]$Serial=0)
+param([int]$Days=7,[string]$Out="",[int]$Serial=0,[string]$Fingerprint="")
 $ErrorActionPreference="Stop"
 $d=$PSScriptRoot
 if(-not $Out){ $Out=Join-Path $d "licence.txt" }
 $mg=(Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Cryptography").MachineGuid
-[byte[]]$fp=([System.Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($mg)))[0..15]
+if($Fingerprint){ [byte[]]$fp=@(); for($i=0;$i -lt 32;$i+=2){ $fp+=[Convert]::ToByte($Fingerprint.Substring($i,2),16) } } else { [byte[]]$fp=([System.Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($mg)))[0..15] }
 $now=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 $b=@()
 $b+=[Text.Encoding]::ASCII.GetBytes("RRL1")
@@ -20,3 +20,4 @@ $tok=[Convert]::ToBase64String([byte[]]($b+$sig))
 "serial=$Serial days=$Days exp=$([DateTimeOffset]::FromUnixTimeSeconds($now+[long]$Days*86400).ToString("yyyy-MM-dd HH:mm"))Z"
 $tok
 $s.Dispose()
+
