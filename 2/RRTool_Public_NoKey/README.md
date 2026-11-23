@@ -1,4 +1,6 @@
-# RRTool source study guide
+# Dreww - source study guide
+
+> Note de base (2026-11-23): ce guide vient de l instantane RRTool d origine. Le produit est exploite sous la marque Dreww; les noms RRTool, RobRunESP et RobRunAIO restent ceux du code. Licence, colis et documents client vivent dans _licence, setup, docs et les scripts racine.
 
 RRTool is a Windows C/C++ external overlay for ROB RUN. This source snapshot
 is a teaching example of memory transport, object discovery, concurrent
@@ -22,6 +24,12 @@ are not part of this teaching edition.
 | `4_src_mapper/kd2_src/` | Mapper solution and source |
 | `offsets/` | Managed field definitions and rig provenance in JSON |
 | `tools/` | Offset generation and auditing scripts |
+| `5_src_loader/` | Loader source |
+| `dist/` | Distribution output, currently empty |
+| `docs/` | Client install document and branding |
+| `setup/` | Repair scripts: hypervisor cut, licence folder |
+| `_licence/` | Issuing workshop: private key, keygen, launcher |
+| `_scratch/` | Throwaway probes and build logs |
 
 The overlay build produces `RobRunPort.exe`. Some identifiers and log strings
 retain older names such as `RobRunESP` or `RobRunAIO`; they do not identify

@@ -156,3 +156,8 @@ OUVERT
   HANDOFF_*.txt, MAINTENANCE_fast_scan.txt et SINGLE_BUILD.md passent dans _scratch.
   Racine reduite a .gitignore, BUILD.md, INSTALLER.ps1, JOURNAL_AGENT.txt, README.md, selftest.log, _wl.txt.
   README.md reste faux (D10).
+
+2026-11-23 README recadre (D10 ferme)
+  Titre Dreww, note de base rappelant l origine RRTool et la marque exploitee.
+  Carte des dossiers completee: 5_src_loader, dist, docs, setup, _licence, _scratch.
+  Contenu d origine conserve, c est un guide d etude.
