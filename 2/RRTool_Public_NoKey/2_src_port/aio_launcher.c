@@ -253,7 +253,7 @@ static void paint_window(HWND h) {
     gr.UpperLeft = 0; gr.LowerRight = 1;
     GradientFill(dc, tv, 2, &gr, 1, GRADIENT_FILL_RECT_V);
 
-    if (g_brand_bmp) { HDC md = CreateCompatibleDC(dc); HGDIOBJ ob = SelectObject(md, g_brand_bmp); BLENDFUNCTION bf = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA }; AlphaBlend(dc, 24, 22, s, s, md, 0, 0, g_brand_w, g_brand_h, bf); SelectObject(md, ob); DeleteDC(md); } else { draw_emblem(dc, 24, 22, s); }
+    if (g_brand_bmp) { HDC md = CreateCompatibleDC(dc); HGDIOBJ ob = SelectObject(md, g_brand_bmp); SetStretchBltMode(md, HALFTONE); SetBrushOrgEx(md, 0, 0, NULL); BLENDFUNCTION bf = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA }; AlphaBlend(dc, 24, 22, s, s, md, 0, 0, g_brand_w, g_brand_h, bf); SelectObject(md, ob); DeleteDC(md); } else { draw_emblem(dc, 24, 22, s); }
 
     SetBkMode(dc, TRANSPARENT);
     oldf = (HFONT)SelectObject(dc, g_f_brand);
@@ -290,8 +290,6 @@ static void paint_window(HWND h) {
     TextOutW(dc, 24, rc.bottom - 24, L"DREWW", 5);
     GetTextExtentPoint32W(dc, L"v1.0.0", 6, &word);
     TextOutW(dc, rc.right - 24 - word.cx, rc.bottom - 24, L"v1.0.0", 6);
-    GetTextExtentPoint32W(dc, L"v1.0.0", 6, &word);
-    TextOutW(dc, rc.right - 24 - word.cx, rc.bottom - 24, L"v1.0.0", 6);
     SetTextCharacterExtra(dc, 0);
     SelectObject(dc, oldf);
 
@@ -304,6 +302,12 @@ static LRESULT CALLBACK wnd_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_CREATE: {
         RECT rc;
         load_brand_fonts();
+        {
+            HBITMAP bmp = (HBITMAP)LoadImageW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(AIO_BITMAP_BRAND), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+            BITMAP bm;
+            if (bmp && GetObjectW(bmp, sizeof(bm), &bm) && bm.bmBitsPixel == 32) { g_brand_bmp = bmp; g_brand_w = bm.bmWidth; g_brand_h = bm.bmHeight; }
+            else if (bmp) DeleteObject(bmp);
+        }
         g_log_brush = CreateSolidBrush(C_SURF);
         g_status_brush = CreateSolidBrush(RGB(11, 14, 19));
         GetClientRect(h, &rc);
@@ -1624,3 +1628,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
     log_add(L"done");
     return 0;
 }
+
+
+
+
