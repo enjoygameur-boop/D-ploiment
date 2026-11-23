@@ -86,3 +86,17 @@ OUVERT
   Tests: joker lie (C=1), relance acceptee, place prise par empreinte etrangere refusee,
   jeton lie ailleurs refuse avant liaison (bind.dat intact).
   AIO reconstruit, _wl.txt mis a jour (2545664 498800FF0C6B27A2), build_port_err.txt ignore.
+
+2026-11-23 Codes de refus completes
+  Code 2: verrou de plage sur licence.dat depuis un handle en lecture seule, lecture refusee, fichier restaure.
+  Code 3: jeton tronque RRL1AAAA, refus immediat.
+  Code 9: MachineGuid vide en administrateur, empreinte indisponible, valeur restauree et empreinte verifiee.
+  Les dix codes 1 a 10 sont prouves en reel.
+
+2026-11-23 Livrables
+  docs/INSTALLATION_CLIENT.md: prerequis, integrite memoire, Sordum Defender Control, script hyperviseur,
+  script dossier, depot de licence, lancement, SmartScreen, codes, regles.
+  setup/1_couper_hyperviseur.ps1 et setup/2_creer_dossier.ps1.
+  fichier originel deplace vers Cheats\_archive\originel avec README_ARCHIVE.txt, _archive ignore.
+  keygen.ps1: 30 jours par defaut. En-tete loader.cpp corrige, SINGLE_BUILD.md marque obsolete.
+  2_src_port/RobRunAIO.exe sorti du suivi.
