@@ -161,3 +161,9 @@ OUVERT
   Titre Dreww, note de base rappelant l origine RRTool et la marque exploitee.
   Carte des dossiers completee: 5_src_loader, dist, docs, setup, _licence, _scratch.
   Contenu d origine conserve, c est un guide d etude.
+
+2026-11-23 Lanceur INSTALLER.cmd
+  Un .ps1 ne s ouvre pas d un double-clic: INSTALLER.cmd appelle le ps1 en Bypass et forwarde les arguments.
+  Document client: double-clic sur INSTALLER.cmd.
+  Cas corrige: licence deja a destination, Copy-Item sur lui-meme evite.
+  Test reel par le .cmd: 4 etapes passent, INSTALLER.cmd copie, raccourci et licence en place.

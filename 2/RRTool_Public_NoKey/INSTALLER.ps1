@@ -40,6 +40,7 @@ foreach ($d in "1_run", "setup", "docs") {
     }
 }
 Copy-Item (Join-Path $src "INSTALLER.ps1") (Join-Path $dst "INSTALLER.ps1") -Force
+Copy-Item (Join-Path $src "INSTALLER.cmd") (Join-Path $dst "INSTALLER.cmd") -Force
 
 Write-Host "2/4  Licence"
 $lic = Join-Path $env:LOCALAPPDATA "Dreww"
@@ -50,7 +51,9 @@ $dlg.Title = "Selectionne licence.dat"
 $dlg.Filter = "Licence (licence.dat)|*.dat|Tous les fichiers|*.*"
 if ($dlg.ShowDialog() -eq "OK") {
     try {
-        Copy-Item $dlg.FileName (Join-Path $lic "licence.dat") -Force
+        $dstLic = Join-Path $lic "licence.dat"
+        if ($dlg.FileName -ne $dstLic) { Copy-Item $dlg.FileName $dstLic -Force }
+        Write-Host "     licence en place"
         Write-Host "     licence installee"
     } catch {
         Write-Host "     copie impossible : $($_.Exception.Message)"

@@ -19,7 +19,7 @@ Decompresse, lance `dControl.exe` en administrateur, clique **Disable Windows De
 
 ## 3. Lancer l installateur
 
-Clic droit sur `INSTALLER.ps1`, **Executer avec PowerShell**. Il s eleve seul et enchaine tout:
+Double-clic sur `INSTALLER.cmd`. Il s eleve seul et enchaine tout:
 
 - copie du produit dans `C:\Dreww`;
 - fenetre de choix: designe ton `licence.dat`, il l installe lui-meme au bon endroit;
