@@ -39,6 +39,7 @@
 
 #include "aio_resources.h"
 #include "brand_resources.h"
+#include "licence.h"
 #pragma comment(lib, "msimg32.lib")
 #pragma comment(lib, "gdi32.lib")
 
@@ -1544,6 +1545,16 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
         }
     }
 
+    {
+        int lc = lic_check();
+        if (lc) {
+            log_add(L"licence: refusee (code %d)", lc);
+            fail(L"Licence absente ou invalide (code %d).\n\n%s\n\nFichier attendu:\n%%LOCALAPPDATA%%\\Dreww\\licence.dat",
+                 lc, lic_last_error(lc));
+        }
+        log_add(L"licence: OK");
+    }
+
     ui_status(L"Extracting payload...");
     int ok = extract_resource(AIO_RCDATA_KD2, MAPPER_EXE) &&
              extract_resource(AIO_RCDATA_DRIVER, DRIVER_IMAGE) &&
@@ -1628,6 +1639,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
     log_add(L"done");
     return 0;
 }
+
 
 
 

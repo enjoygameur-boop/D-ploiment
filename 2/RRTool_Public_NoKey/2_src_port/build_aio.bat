@@ -41,11 +41,12 @@ echo [1/3] resources
 rc /nologo /fo aio.res aio_launcher.rc || goto fail
 echo [2/3] compile
 cl %CFLAGS% /c aio_launcher.c /Fo:aio_launcher.obj || goto fail
+cl %CFLAGS% /c licence.c /Fo:licence.obj || goto fail
 echo [3/3] link
 link /nologo /SUBSYSTEM:WINDOWS /MACHINE:X64 /OUT:RobRunAIO.exe ^
   /MANIFEST:EMBED /MANIFESTINPUT:aio.manifest ^
   /MANIFESTUAC:"level='requireAdministrator' uiAccess='false'" ^
-  aio_launcher.obj aio.res ^
+  aio_launcher.obj licence.obj aio.res ^
   user32.lib gdi32.lib advapi32.lib comctl32.lib bcrypt.lib || goto fail
 
 copy /Y RobRunAIO.exe "..\1_run\RobRunAIO.exe" >nul
@@ -57,3 +58,4 @@ exit /b 0
 :fail
 echo BUILD_FAIL
 exit /b 1
+
