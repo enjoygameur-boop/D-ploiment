@@ -1,6 +1,6 @@
-﻿/* loader.cpp - Dreww loader.
+/* loader.cpp - Dreww loader.
  *
- * Key-free build: no license server, no key field, no cached credentials.
+ * Offline licence gate: no server. licence.dat lives in %LOCALAPPDATA%\Dreww and is checked by the payload.
  * It finds RobRunAIO.exe beside itself (or in payload\) and starts it elevated.
  */
 

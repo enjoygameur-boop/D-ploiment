@@ -1,3 +1,5 @@
+> Statut au 2026-11-23: partiellement obsolete. La chaine actuelle est build_port.bat puis build_aio.bat, decrite dans BUILD.md. Les chemins et le decoupage du payload ci-dessous ne correspondent plus au depot.
+
 # ROB RUN AIO - Single Executable Build Guide
 
 ## Overview
