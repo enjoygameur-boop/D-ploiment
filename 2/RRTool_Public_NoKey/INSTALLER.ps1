@@ -74,7 +74,7 @@ if (Test-Path $hv) {
 Write-Host "4/4  Raccourci"
 $ws = New-Object -ComObject WScript.Shell
 $lnk = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath("Desktop")) "Dreww.lnk"))
-$lnk.TargetPath = Join-Path $dst "1_run\FFLoader.exe"
+$lnk.TargetPath = Join-Path $dst "1_run\DrewwLoader.exe"
 $lnk.WorkingDirectory = $dst
 $lnk.Save()
 

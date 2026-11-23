@@ -38,13 +38,13 @@ Ces fichiers n ont pas ete lus a la source, les fiches correspondantes reposent 
 - Aucune signature de binaire. docs/DEFAUTS.md:14.
 - Aucune revocation de licence. docs/DEFAUTS.md:18.
 - Aucune sauvegarde de la cle privee decrite en procedure. docs/RISQUES.md:18.
-- Le contrat du loader FFLoader.exe n est documente nulle part.
+- Le contrat du loader DrewwLoader.exe n est documente nulle part.
 - Le mode dump n a aucune documentation.
 - Les bornes et le format de la configuration ne sont pas decrits hors du schema.
 
 ## Contradictions non tranchees
 - Code 4 absent de la table publique, present en interne. docs/INSTALLATION_CLIENT.md:46-54 contre JOURNAL entree licence.
-- Raccourci START.bat puis FFLoader.exe. JOURNAL, deux entrees du meme jour.
+- Raccourci START.bat puis DrewwLoader.exe. JOURNAL, deux entrees du meme jour.
 - D05 ouvert au registre, ferme au journal.
 - Trois hachages pour une meme taille dans _wl.txt.
 - docs reduits a un fichier annonce, docs/branding copie quand meme.

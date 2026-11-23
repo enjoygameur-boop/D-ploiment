@@ -1,4 +1,4 @@
-# FFLoader — public build
+# DrewwLoader — public build
 
 Key-free launcher for the public Rob Run release. It does **not** contact a
 license server, store credentials, or ask for a key.
@@ -19,12 +19,12 @@ If no payload is found it reports that instead of failing silently.
 build_loader.bat
 ```
 
-Output: `FFLoader.exe` in this folder. The manifest runs the loader as invoker; the payload itself is started with runas.
+Output: `DrewwLoader.exe` in this folder. The manifest runs the loader as invoker; the payload itself is started with runas.
 
 ## Layout
 
 ```
-FFLoader.exe
+DrewwLoader.exe
 RobRunAIO.exe        <- payload, beside the loader
 ```
 

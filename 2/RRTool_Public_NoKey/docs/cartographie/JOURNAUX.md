@@ -14,7 +14,7 @@ Une ligne par entree, datee, avec ce qui reste vrai et ce qui est perime.
 2026-11-23, test en jeu : refus de mappage nomme, hyperviseur coupe, overlay present. VRAI. L AIO se ferme et l overlay se masque, Get-Process ne les voit pas.
 2026-11-23, restants : INSTALLER.ps1 non teste, trois defauts connus. PERIME, l installateur a ete durci et teste ensuite.
 2026-11-23, installateur durci : chemin par MyInvocation, liste blanche, -NoReboot. VRAI. Le raccourci vise START.bat dans cette entree.
-2026-11-23, installation validee : raccourci corrige vers FFLoader.exe. VRAI, INSTALLER.ps1:77 le confirme.
+2026-11-23, installation validee : raccourci corrige vers DrewwLoader.exe. VRAI, INSTALLER.ps1:77 le confirme.
 2026-11-23, document ramene a la voie installateur. VRAI.
 2026-11-23, etat des lieux classe. VRAI.
 2026-11-23, D15 classe sans suite. VRAI, pas de desinstalleur.

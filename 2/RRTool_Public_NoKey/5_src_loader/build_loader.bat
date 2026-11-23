@@ -1,7 +1,7 @@
 @echo off
 setlocal
-rem Build FFLoader.exe (public, key-free launcher).
-rem Output: FFLoader.exe in this folder. Pair it with FFLoader.ini.
+rem Build DrewwLoader.exe (public, key-free launcher).
+rem Output: DrewwLoader.exe in this folder. Pair it with DrewwLoader.ini.
 cd /d "%~dp0"
 
 set "VS="
@@ -26,10 +26,10 @@ echo [1/2] compile
 cl %CFLAGS% /c loader.cpp /Fo:loader.obj || goto fail
 echo [2/2] link + manifest
 rc /nologo /fo loader.res loader.rc || goto fail
-cl %CFLAGS% loader.obj loader.res /Fe:FFLoader.exe /link /SUBSYSTEM:WINDOWS %LIBS% || goto fail
+cl %CFLAGS% loader.obj loader.res /Fe:DrewwLoader.exe /link /SUBSYSTEM:WINDOWS %LIBS% || goto fail
 
 del /q loader.obj loader.res 2>nul
-echo BUILD_OK  -  FFLoader.exe
+echo BUILD_OK  -  DrewwLoader.exe
 exit /b 0
 
 :fail
