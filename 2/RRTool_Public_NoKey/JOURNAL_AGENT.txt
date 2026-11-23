@@ -116,3 +116,8 @@ OUVERT
   A retenir: l AIO se ferme apres extraction et l overlay se masque, donc Get-Process
   ne les voit pas; seul le processus du jeu et l affichage a l ecran font foi.
   INSTALLER.ps1 ajoute au suivi, non teste, trois defauts connus.
+
+2026-11-23 Restants revus
+  Retires de la liste: durcissement keygen.ps1, reprise aim, verification des offsets.
+  Restent: durcissement INSTALLER.ps1, exclusion des documents internes du colis, etat des lieux 4-8,
+  manuel, defauts D02 D03 D05 D10 D15.
