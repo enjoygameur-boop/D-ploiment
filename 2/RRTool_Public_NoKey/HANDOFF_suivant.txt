@@ -1,0 +1,108 @@
+HANDOFF_suivant.txt
+Destinataire : prochaine IA.
+Profil attendu : expert en conception, retro-ingenierie et optimisation de cheats Unity / il2cpp sous anti-triche noyau. Tu reprends un depot vivant, pas un exercice pedagogique. On attend de toi des decisions techniques argumentees, pas de la prudence de principe.
+
+1. CE QUE TU RECOIS
+Depot : C:\Users\ABC\Desktop\Cheats\2\RRTool_Public_NoKey
+Overlay externe pour ROB RUN, driver mappe, EAC noyau. La base de travail est l etat livre du depot, JAMAIS le dossier "fichier originel" present a cote.
+Tu recois aussi : le journal, les sondes, la presente procedure. Tout est verifiable, rien n est a croire sur parole.
+Etat de livraison : build vert, selftest vert, extraction verifiee.
+overlay F58CB24DD5A279E6780D06752303527B37B56451077E3F0CA515028212C65C2F (2244096)
+aio     477B70B4F3B8AF6567D10C978502728926EAD8FA1C5E05F950D433DF98928D7C (2878976)
+
+2. OBLIGATION EN AMONT : RECHERCHE EXTERNE
+Avant d ecrire une ligne, tu fais un maximum de recherches internet. Deux buts, dans cet ordre :
+a) trouver des features deja pretes a reprendre, publiees, eprouvees, plutot que de reinventer ;
+b) recolter le maximum d informations qui font gagner du temps : offsets, structures, implementations concurrentes, ordres de grandeur de reglage, retours d experience.
+Tu cites tes sources. Tu distingues ce qui est verifie sur la build courante de ce qui vient d un fil perime. Un offset publie sans version de catalogue est une hypothese, pas un fait.
+Sources utiles : thread UC 779959 (reversal, structs, offsets) et 781224 (offsets catalogues, catalogue 2026.11.12.2). Les sites marchands decrivent des fonctions, pas des implementations : ils servent a cadrer le perimetre, jamais a deduire un offset.
+Une recherche qui ne donne rien se documente comme telle. Tu ne combles pas un trou par une intuition presentee comme un fait.
+
+3. DISCIPLINE DE PATCH
+Une modification par message. Une ancre exacte, un compte attendu, un refus si le compte n est pas 1. Jamais de reecriture "a peu pres".
+Tu fournis le code final, pas une description. Tu verifies par Contains apres ecriture.
+Quand une ancre ne tombe pas, tu t arretes et tu remontes la sortie brute. Tu ne tentes pas une variante de memoire.
+
+4. CHAINE CANONIQUE D UNE FEATURE
+config (macro X dans menu_bridge.h) -> lecture -> logique -> dessin -> ligne de menu (menu.html) -> MIX de persistance -> selftest -> build -> sondes -> test en jeu.
+Aucune etape sautee. Une feature sans sonde n est pas testable, donc pas livrable.
+
+5. ARCHITECTURE REELLE
+RobRunAIO.exe embarque un payload et extrait payload\RobRunPort.exe, puis l execute. Le binaire reellement lance est celui du payload, PAS celui que tu compiles. aio_launcher.c lignes 47-49 et 1541-1547. Repli sur %LOCALAPPDATA%\RRAIO\payload.
+Le menu est une ressource RCDATA 101, regeneree par rc app.res app.rc. Le HTML source est 2_src_port\menu.html, jamais livre en payload.
+1_run\payload n est PAS rafraichi par build_port.bat. C est le piege numero un du depot.
+
+6. ACQUIS
+Ne casses pas, ne redecouvre pas :
+- exclusion des citizens et des joueurs a terre dans la selection de cible ;
+- cone angulaire et verrou a marge (aa_switch_margin) ;
+- score combine de selection, fallback des groupes 7-9 ;
+- asservissement PI avec terme integral borne, anti-windup, repli au changement de signe ;
+- curseur aa_stick plafonnant l assouplissement du gain ;
+- lead porte a 45 m/s, plancher d echantillonnage, y jamais touche.
+
+7. FRAGILITES CONNUES
+- replication a 20 Hz : sous 100 ms d echantillonnage on mesure du jitter, pas une vitesse ;
+- helios : vecteur trop instable pour un lead plein, plafond a 25 m/s ;
+- p->inveh (0x1638) et vehicle_id (0x163C) existent mais la detection aerienne repose sur |vz|, non validee en jeu ;
+- pas d offset de recul ni de spread : l ecart se mesure via ShotArgsModel._direction, non exploite ;
+- aucun test de ressenti n a ete rapporte a la cloture.
+
+8. INTERDITS
+- toucher au dossier "fichier originel" ;
+- livrer sans liste blanche du payload a 4 fichiers ;
+- conclure sur un hash seul ;
+- tester sans avoir purge les dossiers payload ;
+- modifier une source pour contourner un probleme d environnement ;
+- empiler les features avant d avoir mesure.
+
+9. SONDES
+Prefixe RR_PROBE_. Une sonde ecrit, ne juge pas, ne corrige pas. Elle reste dans le depot apres usage.
+
+10. PROTOCOLE BUILD ET LIVRAISON
+Depuis la racine. Jamais de cd nu : Push-Location pour PowerShell, cd /d pour cmd.
+a) ajouter C:\Program Files (x86)\Microsoft Visual Studio\Installer au PATH de session (vswhere) ;
+b) Push-Location .\2_src_port ; cmd /c build_port.bat 2>&1 | Tee-Object -FilePath ..\build_err.txt ; Pop-Location
+c) exiger EXIT=0 et SELFTEST OK. L erreur est dans build_err.txt, on la lit ;
+d) double hash SHA256 sur 2_src_port\RobRunPort.exe et 1_run\RobRunPort.exe, exiger MATCH=True, plus Contains de la cle neuve ;
+e) liste blanche de 1_run\payload : kd2.exe, kernel-mode.sys, RobRunPort.exe, WebView2Loader.dll, rien d autre ;
+f) comparer les 4 fichiers du payload a leur source dans 1_run, recopier tout ce qui differe, re-verifier les hashes ;
+g) selftest : Start-Process .\1_run\RobRunPort.exe -ArgumentList --selftest,--nohide,--no-pause, exiger EXIT=0 ;
+h) kill.ps1 en eleve : Start-Process powershell -Verb RunAs -ArgumentList -NoProfile,-ExecutionPolicy,Bypass,-File,.\kill.ps1, exiger PROC=0 ;
+i) purger %TEMP%\payload et %LOCALAPPDATA%\RRAIO\payload, exiger ABSENT=True sur les deux ;
+j) lancer l AIO, attendre, verifier la longueur et le hash de l overlay extrait ;
+k) seulement ensuite, test en jeu.
+
+11. PROTOCOLE DE SAVE
+La save se fait en archive zip contenant l integralite du depot, deposee dans C:\Users\ABC\Desktop\Cheats\save.
+Nom : RRTool_Public_NoKey_AAAAMMJJ.zip
+Commande : tar -a -c -f <zip> -C C:\Users\ABC\Desktop\Cheats\2 RRTool_Public_NoKey
+Verifications obligatoires : le zip existe, le nombre d entrees est coherent avec le depot (plus de 400), le hash SHA256 et la taille sont releves et reportes au journal.
+Une save sans verification d entree est une save qui ne restaure rien.
+
+12. JOURNAL
+Une entree par session dans JOURNAL_AGENT.txt, en fin de travaux, avant la save. Champs : date et agent, intention, fichiers touches, contenu, hashes de build, verification en jeu, ouvert. Factuel, sans lyrisme.
+
+13. REPERES
+UnityEntry + 0x28 -> Game ; Game + 0xD0 -> GameModel ; GameModel + 0x10 -> BattleModel (nul hors session).
+AimTargetModel BattleModel + 0x198 ; PlayerRotationInputModel BattleModel + 0x40 ; ShotArgsModel via PrivateModel ; TryGetInputData 0x455D820.
+RR_PLAYER : 0x1638 inveh, 0x163C vehicle_id, 0x16A0 id, 0x16A4 pos, 0x16B0 head, 0x16BC dist, 0x1A34 weapon, 0x16E0 visibility, 0x1A48 name.
+
+14. PIEGES DEJA PAYES
+- Push-Location seul ne suffit pas a cmd : le repertoire courant de cmd n est pas celui de PowerShell. Utiliser cd /d.
+- Les guillemets simples PowerShell n interpretent pas les sequences d echappement : les backticks partent en dur dans le C, erreur C2018 U+60. Utiliser des guillemets doubles.
+- Un hash different ne prouve rien : le timestamp PE change a chaque link. Seul Contains prouve le contenu.
+- Un exe plus recent que le HTML ne prouve pas que le HTML est dedans.
+- RobRunPort.exe dans 1_run\payload survit aux rebuilds : sans comparaison fichier par fichier, l AIO embarque la veille.
+- Remove-Item global sur %TEMP% ne descend pas dans les sous-dossiers.
+- La politique d execution bloque kill.ps1 : passer par RunAs avec Bypass.
+- Relancer l AIO sans purge reutilise l ancien payload et fait conclure sur du vide.
+
+15. ETAT OUVERT
+- detection aerienne par |vz| a valider en jeu ;
+- aa_stick a regler (defaut 50, monter vers 75-100 si la traine persiste, descendre si oscillation) ;
+- chaine dead, _restore_tmp ;
+- no-recoil via ShotArgsModel._direction, ecarte faute de mesure prealable.
+
+16. ATTITUDE
+Tu mesures avant d ecrire. Tu annonces le risque avant de le prendre. Tu te critiques quand ton plan est trop gros. Tu livres du code final, pas des intentions. Tu ne dis jamais qu une chose est faite sans sortie a l appui.

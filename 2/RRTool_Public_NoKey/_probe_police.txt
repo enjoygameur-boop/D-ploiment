@@ -1,0 +1,108 @@
+﻿### POLICE
+rr_aim.c:28: if (!rr_relationship_allowed(p->relationships, config->aa_target_clan, config->aa_target_police)) continue;
+rr_draw.c:41: if (p->relationships & RR_REL_POLICE) return RRGB(86, 255, 246);
+rr_draw.c:346: } else if (!p->is_vehicle && !rr_relationship_allowed(p->relationships, b->show_clan, b->show_police)) continue;
+rr_draw.c:464: if (!rr_relationship_allowed(p->relationships, b->show_clan, b->show_police)) continue;
+rr_draw.c:488: if (!rr_relationship_allowed(p->relationships, b->show_clan, b->show_police)) continue;
+rr_draw.c:598: if (p->relationships == (RR_REL_CLAN | RR_REL_POLICE)) rt = "CLAN / POLICE";
+rr_draw.c:600: else if (p->relationships & RR_REL_POLICE) rt = "POLICE COWORKER";
+rr_esp.c:536: if (i == 2 || i == 3) p->relationships |= RR_REL_POLICE;
+rr_esp.c:745: MIX(b->show_clan); MIX(b->show_police);
+rr_game.c:5347: int local_is_police = local && strcmp(local->role, "cop") == 0;
+rr_game.c:5380: if (local_is_police && strcmp(snap[i].role, "cop") == 0)
+rr_game.c:5381: p->relationships |= RR_REL_POLICE;
+menu_bridge.h:28: X(show_police, 1, 0, 1) \
+menu_bridge.h:45: X(aa_target_police, 0, 0, 1) \
+rr_game.h:31: enum { RR_REL_CLAN = 1, RR_REL_POLICE = 2 };
+rr_game.h:41: static inline int rr_relationship_allowed(unsigned flags, int clan, int police) {
+rr_game.h:42: unsigned allowed = (clan ? RR_REL_CLAN : 0) | (police ? RR_REL_POLICE : 0);
+rr_vehicle_cham_model.h:792: {"longhornwildpolice01", vehicle_hull_10_positions, vehicle_hull_10_triangles, 104, 114},
+menu.html:401: <label class="row"><span>Police coworkers</span><input type="checkbox" data-key="show_police" checked><i class="sw"></i></label>
+menu.html:519: <label class="row"><span>Target police coworkers</span><input type="checkbox" data-key="aa_target_police"><i class="sw"></i></label>
+menu.html:576: <span><i style="--c:#56fff6"></i>Police coworkers</span>
+menu.html:577: <span><i style="--c:#5aaaff"></i>Police</span>
+### CITIZEN
+rr_aim.c:27: if (!p->addr || !p->valid || p->dead || p->knocked || p->civil || p->is_vehicle || p->is_loot || p->local || p->hidden_in_object) continue;
+rr_draw.c:30: /* Map replicated role names to marker colors for cops, robbers and civilians. */
+rr_draw.c:34: if (strstr(role, "hubber") || strstr(role, "civilian")) return RRGB(220, 220, 220);
+rr_draw.c:35: if (strstr(role, "citizen")) return RRGB(200, 230, 200);
+rr_draw.c:597: const char* rt = "CITIZEN";
+rr_draw.c:603: else if (strstr(p->role, "hubber")) rt = "CIVILIAN";
+rr_draw.c:604: else if (!strstr(p->role, "citizen")) rt = 0;
+rr_draw.c:606: /* Draw a filled role badge: blue for cops, red for robbers, green for citizens. */
+rr_esp.c:757: MIX(p->id); MIX(p->local); MIX(p->hidden_in_object); MIX(p->dead); MIX(p->knocked); MIX(p->civil); MIX(p->armor); MIX(p->crouch); MIX(p->is_vehicle); MIX(p->is_loot); MIX(p->loot_rarity); MIX(p->occupants); MIX(p->occupants_known);
+rr_esp.c:1055: written.aa_ignore_civil = 1;
+rr_esp.c:1067: loaded.aa_closest_first == 1 && loaded.aa_ignore_knocked == 1 && loaded.aa_ignore_civil == 1 && loaded.aa_key == VK_RBUTTON && loaded.aa_bone == RR_AIM_FEET && loaded.color[7].rgb[0] == 117,
+rr_game.c:1588: /* ---- civilians: aim must skip players in civilian clothes --------------- */
+rr_game.c:1590: typedef struct { char id[20]; int8_t civil; } rr_role_cache_t;
+rr_game.c:1594: /* Classify one role string once: 1 civilian, 0 other, -1 empty.
+rr_game.c:1598: * The game tags civilians "citizen"; "civilian" is kept as the second form. */
+rr_game.c:1606: return g_role_cache[i].civil;
+rr_game.c:1608: v = !strcmp(role, "citizen") || !strcmp(role, "civilian");
+rr_game.c:1609: dlog("role id='%s' civil=%d", role, v);
+rr_game.c:1613: g_role_cache[i].civil = (int8_t)v;
+rr_game.c:1617: /* 1 when the role is a civilian. Cops and criminals stay targetable. */
+rr_game.c:1618: int rr_char_is_civil(const char* role)
+rr_game.c:4000: } XF_JOB;
+rr_game.c:4002: static XF_JOB   g_xf;
+rr_game.c:5376: if (cfg->aa_ignore_civil) p->civil = rr_char_is_civil(snap[i].role);
+menu_bridge.h:49: X(aa_ignore_civil, 0, 0, 1) \
+rr_game.h:72: int      civil;               /* role is a civilian/citizen */
+### PICK
+rr_aim_pick(const RR_PLAYER* players, int count, const RR_CAMERA* camera,
+                       int width, int height, const BR_Config* config,
+                       uint64_t locked_addr, int32_t locked_id, int (*clear)(RR_V3, RR_V3)) {
+    RR_AIM_PICK best = {0}, held = {0};
+    float best_score = INFINITY, held_ang = INFINITY;
+    float cx = width * 0.5f, cy = height * 0.5f;
+    float radius = (float)(config->aa_fov_px > 0 ? config->aa_fov_px : 150);
+    /* The cone is derived from the drawn radius at the current zoom, so the ring
+     * on screen and the limit used here describe the same angle. */
+    float tan_half = tanf(camera->fov * 3.14159265f / 360.0f);
+    float limit = (tan_half > 0.01f && height > 0)
+                ? atanf(radius / ((height * 0.5f) / tan_half)) * 57.295779513f : 6.0f;
+    float margin = (float)config->aa_switch_margin;
+    int group = config->aa_bone;
+    for (int i = 0; i < count; ++i) {
+        const RR_PLAYER* p = &players[i];
+        int is_held = locked_addr && p->addr == locked_addr && p->id == locked_id;
+        if (!p->addr || !p->valid || p->dead || p->knocked || p->civil || p->is_vehicle || p->is_loot || p->local || p->hidden_in_object) continue;
+        if (!rr_relationship_allowed(p->relationships, config->aa_target_clan, config->aa_target_police)) continue;
+        if (!isfinite(p->dist) || (config->aa_dist > 0 && p->dist > (float)config->aa_dist)) continue;
+
+        float sx, sy;
+        RR_V3 point;
+        if (!rr_aim_point(p, group, camera, width, height, &point) ||
+            !game_w2s(camera, &point, width, height, &sx, &sy)) continue;
+        float ax = point.x - camera->pos.x, ay = point.y - camera->pos.y, az = point.z - camera->pos.z;
+        float len = sqrtf(ax*ax + ay*ay + az*az);
+        if (!isfinite(len) || len < 0.05f) continue;
+        float dot = (ax*camera->fwd.x + ay*camera->fwd.y + az*camera->fwd.z) / len;
+        if (dot > 1.0f) dot = 1.0f; else if (dot < -1.0f) dot = -1.0f;
+        float ang = acosf(dot) * 57.295779513f;
+        if (!isfinite(ang)) continue;
+        if (!is_held && ang > limit) continue;
+        float dx = sx - cx, dy = sy - cy;
+        if (!isfinite(dx) || !isfinite(dy)) continue;
+        /* When the chosen joint is blocked, retry the same area for a clear one. */
+        if (clear && !clear(camera->pos, point)) {
+            if (!rr_aim_visible_point(p, group, camera, width, height, &point, clear) ||
+                !game_w2s(camera, &point, width, height, &sx, &sy)) continue;
+            ax = point.x - camera->pos.x; ay = point.y - camera->pos.y; az = point.z - camera->pos.z;
+            len = sqrtf(ax*ax + ay*ay + az*az);
+            if (!isfinite(len) || len < 0.05f) continue;
+            dot = (ax*camera->fwd.x + ay*camera->fwd.y + az*camera->fwd.z) / len;
+            if (dot > 1.0f) dot = 1.0f; else if (dot < -1.0f) dot = -1.0f;
+            ang = acosf(dot) * 57.295779513f;
+            if (!isfinite(ang)) continue;
+            dx = sx - cx; dy = sy - cy;
+            if (!isfinite(dx) || !isfinite(dy)) continue;
+        }
+        if (is_held) { held = (RR_AIM_PICK){p, point, dx, dy}; held_ang = ang; continue; }
+        float score = ang + 0.02f * p->dist;
+        if (score < best_score) { best = (RR_AIM_PICK){p, point, dx, dy}; best_score = score; }
+    }
+    /* A held lock keeps the pointer until a rival beats it by the switch margin. */
+    if (held.player && (!best.player || best_score + margin >= held_ang)) return held;
+    return best;
+}

@@ -1,0 +1,24 @@
+﻿payload folder: C:\Users\ABC\Desktop\Cheats\2\RRTool_Public_NoKey\1_run\payload
+Felonious Funnery  —  Rob Run
+hypervisor present : no
+VBS registry       : disabled
+memory integrity   : disabled
+credential guard   : not set
+virtualization check passed
+settings: menu_delay=5 menu_wait_window=1 attach_timeout=120 reattach_attempts=3 hide_launcher=0 masquerade=1
+extracted kd2.exe (222720 bytes)
+extracted kernel-mode.sys (19968 bytes)
+extracted RobRunPort.exe (2244096 bytes)
+extracted WebView2Loader.dll (165440 bytes)
+kernel-mode.sys SHA256 e4f193fa422f5a17e1486ac56e9e42c6d5c8b393df8667bac94d8ecc78d0c615
+driver is already mapped in this session; skipping kd2.exe
+driver ready (Key 0xEE2F2E62)
+ROB RUN.exe is running (pid 4660)
+game window "ROB RUN" 1920x1080 (pid 4660) after 1 s
+waiting 5 s for the main menu
+menu wait finished
+overlay runs as WmiPrvSE.exe in C:\Users\ABC\AppData\Local\Temp
+overlay started (pid 10120)
+overlay attached (game pid 4696)
+warning: overlay attached to pid 4696, window owner is 4660
+done

@@ -1,0 +1,22 @@
+﻿### APPEL
+    last_position_at = snapshot_at;
+    int mx, my;
+    rr_aim_step(&steer, pick.dx, pick.dy, g_rcam.fov, vh, b->aa_smooth, b->aa_aim_cal,
+                elapsed, (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0, &mx, &my);
+    if (mx || my)
+        hklogf("aim: move mx=%d my=%d dist=%.1f err=(%.1f,%.1f)", mx, my, p->dist,
+               pick.dx, pick.dy);
+    aa_move_mouse(mx, my);
+}
+
+### XMACRO
+    X(aa_on, 0, 0, 1) \
+    X(aa_show_fov, 1, 0, 1) \
+    X(aa_fov_px, 150, 30, 600) \
+    X(aa_switch_margin, 2, 0, 15) \
+    X(aa_key, 0x12, 1, 254) \
+    X(aa_smooth, 5, 1, 10) \
+    X(aa_aim_cal, 100, 10, 2000) \
+    X(aa_dist, 0, 0, 1000) \
+    X(aa_target_clan, 0, 0, 1) \
+    X(aa_target_police, 0, 0, 1) \

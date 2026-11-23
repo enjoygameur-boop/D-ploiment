@@ -1,0 +1,48 @@
+﻿rr_esp.c:91: static CRITICAL_SECTION g_hk_log_cs;
+rr_esp.c:92: static volatile LONG g_hk_log_ready;
+rr_esp.c:94: static void hklogf(const char* fmt, ...) {
+rr_esp.c:100: if (!g_hk_log_ready) {
+rr_esp.c:101: if (InterlockedCompareExchange(&g_hk_log_ready, 1, 0) == 0)
+rr_esp.c:102: InitializeCriticalSection(&g_hk_log_cs);
+rr_esp.c:104: if (g_hk_log_ready) EnterCriticalSection(&g_hk_log_cs);
+rr_esp.c:115: if (g_hk_log_ready) LeaveCriticalSection(&g_hk_log_cs);
+rr_esp.c:130: hklogf("F1 close ignored (key up)");
+rr_esp.c:134: hklogf("F1 close ignored (just opened)");
+rr_esp.c:141: hklogf("F1 menu=%s", b->menu_open ? "open" : "closed");
+rr_esp.c:145: hklogf("INSERT esp=%s", b->enabled ? "on" : "off");
+rr_esp.c:147: hklogf("END quit");
+rr_esp.c:190: hklogf("key id=%d src=%s held, ignored", id, src);
+rr_esp.c:196: hklogf("key id=%d src=%s debounced (age=%lu)", id, src, (unsigned long)age);
+rr_esp.c:200: hklogf("key id=%d src=%s held, ignored", id, src);
+rr_esp.c:204: hklogf("key id=%d src=%s act (age=%lu)", id, src, (unsigned long)age);
+rr_esp.c:433: hklogf("aim: held=%d key=0x%02X menu=%d focused=%d cam=%d n=%d age=%lu keydown=%d",
+rr_esp.c:490: hklogf("aim: move mx=%d my=%d dist=%.1f err=(%.1f,%.1f)", mx, my, p->dist,
+rr_esp.c:601: hklogf("exception in game_snapshot");
+rr_esp.c:640: hklogf("target process lost - clearing anchors and re-attaching");
+rr_esp.c:643: hklogf("re-attached to pid %u", g_rr_pid);
+rr_esp.c:657: hklogf("target pid %u exited - shutting down", (unsigned)g_rr_pid);
+rr_esp.c:818: if (!g_demo) { __try { aa_tick(snapshot_seq, snapshot_at); } __except (EXCEPTION_EXECUTE_HANDLER) { hklogf("exception in aa_tick"); } }
+rr_esp.c:927: __except (EXCEPTION_EXECUTE_HANDLER) { hklogf("exception in draw_esp"); }
+rr_esp.c:939: hklogf("exception in paint");
+rr_esp.c:2884: hklogf("init F1=%d INSERT=%d END=%d llhook=%d rawinput=%d",
+### DLOG_DEF
+
+/* Discovery timing log, written beside the overlay. Kept small and only at
+ * stage boundaries so a cold start can be timed without guessing. */
+static void dlog(const char* fmt, ...) {
+    FILE* f = fopen("discovery.log", "a");
+    if (!f) return;
+    fprintf(f, "%lu ", (unsigned long)GetTickCount());
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(f, fmt, ap);
+    va_end(ap);
+    fputc('\n', f);
+    fclose(f);
+}
+#include "rr_pose_gate.h"
+#include "rr_cham_coherence.h"
+#include "rr_world_marker_select.h"
+#include "rr_hiding.h"
+
+/* These fields are read as packed XYZ triples below. A new SDK layout must

@@ -1,0 +1,5 @@
+﻿ZIP=True
+ENTRIES=3747
+HASH=2D6241FF15695A0C4E83AB3287044F5AE37D05F1CD32761189E0E7A6E68AE911
+LEN=430095522
+JOURNAL_TAIL=2026-11-21 FINAL: fast_scan fonctionnel. Chaine updater+0x68 / content+0x540 / +0x58, 0.0001f, maintien 500ms, restauration. Fermeture du jeu : decocher d'abord (crash sinon).

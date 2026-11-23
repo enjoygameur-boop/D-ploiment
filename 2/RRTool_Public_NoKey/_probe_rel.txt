@@ -1,0 +1,75 @@
+﻿### REL
+#define RR_NAME_MAX    40
+
+typedef struct { float x, y, z; } RR_V3;
+typedef struct { float x, y, z, w; } RR_Q4;
+
+#define RR_MAX_BONES RR_CHAM_BONES
+enum { RR_REL_CLAN = 1, RR_REL_POLICE = 2 };
+enum { RR_LOCAL_CONFIRMED = 1, RR_LOCAL_ESTIMATED = 2 };
+
+/* BattleModel.WorldEntitiesModel: fallback when the primary link
+ * (BattleEntitiesModel + RR_OFF_BATTLE_WORLD) is not populated yet. The
+ * generated headers do not carry this field, so keep it in sync with the
+ * dump: the 2026-11-12 build moved it from 0x510 to 0x518. */
+#define RR_OFF_BATTLE_WORLD_B 0x518u
+
+/* A player in both groups must pass both switches. */
+static inline int rr_relationship_allowed(unsigned flags, int clan, int police) {
+    unsigned allowed = (clan ? RR_REL_CLAN : 0) | (police ? RR_REL_POLICE : 0);
+    return (flags & ~allowed) == 0;
+}
+
+typedef struct RR_PLAYER {
+    float    bone[RR_MAX_BONES][3];  /* reconstructed skeleton joints, world space */
+    int      nbones;
+    int      bone_group[4];          /* head, neck, chest and pelvis indices */
+    int      mesh_bones;             /* joints use live mesh transforms */
+### ESP536
+        p->id = 100 + i;
+        p->pos.x = sinf(a) * dist * 0.55f;
+        p->pos.y = 0.0f;
+        p->pos.z = cosf(a) * dist + 6.0f;
+        p->head = p->pos;
+        p->head.y += 1.8f;
+        float dx = p->pos.x - cam->pos.x, dy = p->pos.y - cam->pos.y, dz = p->pos.z - cam->pos.z;
+        p->dist = sqrtf(dx * dx + dy * dy + dz * dz);
+        p->dead = (i == 4);
+        if (i == 6) { p->local = RR_LOCAL_CONFIRMED; p->pos = (RR_V3){0}; }
+        if (i == 1 || i == 3) p->relationships |= RR_REL_CLAN;
+        if (i == 2 || i == 3) p->relationships |= RR_REL_POLICE;
+        p->valid = 1;
+        snprintf(p->name, sizeof(p->name), "%s", names[i % 6]);
+    }
+    return n;
+}
+/* Exit the overlay without requesting driver unload or process relinking.
+ * rr_drv_close() closes this client handle only. The mapped driver remains
+ * resident; the current hide implementation leaves its detached list entry
+ * self-linked. This behavior is not a general guarantee of kernel safety.
+ */
+static void overlay_exit(int code) {
+    br_config_save();
+### GAME5370
+        if (snap[i].cham_ready) p->cham_rig = snap[i].cham_native[0];
+        p->armor = snap[i].armor;
+        p->crouch = snap[i].crouch;
+        p->local = snap[i].local;
+        p->hidden_in_object = snap[i].hidden_in_object;
+
+        if (cfg->aa_ignore_knocked) p->knocked = rr_char_is_knocked(snap[i].obj);
+        if (cfg->aa_ignore_civil) p->civil = rr_char_is_civil(snap[i].role);
+        if (!p->local) {
+            if (local_clan[0] && strcmp(local_clan, snap[i].clan_tag) == 0)
+                p->relationships |= RR_REL_CLAN;
+            if (local_is_police && strcmp(snap[i].role, "cop") == 0)
+                p->relationships |= RR_REL_POLICE;
+        }
+        p->inveh = snap[i].inveh;
+        p->vehicle_id = snap[i].vehicle_id;
+        snprintf(p->veh, sizeof(p->veh), "%s", snap[i].veh);
+        snprintf(p->role, sizeof(p->role), "%s", snap[i].role);
+        snprintf(p->weapon, sizeof(p->weapon), "%s", snap[i].weapon);
+        snprintf(p->name, sizeof(p->name), "%s", snap[i].name);
+        p->pos.x = f[0]; p->pos.y = f[1]; p->pos.z = f[2];
+        p->rot_yaw = f[4];

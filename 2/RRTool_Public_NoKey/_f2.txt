@@ -1,0 +1,87 @@
+﻿7948 ctfmon 
+8212 dllhost C:\WINDOWS\system32\DllHost.exe
+1940 RuntimeBroker C:\Windows\System32\RuntimeBroker.exe
+12860 RuntimeBroker C:\Windows\System32\RuntimeBroker.exe
+14724 RuntimeBroker C:\Windows\System32\RuntimeBroker.exe
+15364 RuntimeBroker C:\Windows\System32\RuntimeBroker.exe
+780 svchost 
+1176 svchost 
+1292 svchost 
+1424 svchost 
+1476 svchost 
+1720 svchost 
+1728 svchost 
+1792 svchost 
+1836 svchost 
+1844 svchost 
+1852 svchost 
+1900 svchost 
+1964 svchost 
+1972 svchost 
+2036 svchost 
+2052 svchost 
+2220 svchost 
+2304 svchost 
+2376 svchost 
+2468 svchost 
+2480 svchost 
+2492 svchost 
+2712 svchost 
+2788 svchost 
+2800 svchost 
+2888 svchost 
+2892 svchost 
+2912 svchost 
+2948 svchost 
+3012 svchost 
+3028 svchost 
+3088 svchost 
+3140 svchost 
+3172 svchost 
+3188 svchost 
+3300 svchost 
+3308 svchost 
+3332 svchost 
+3568 svchost 
+3616 svchost 
+3696 svchost 
+3812 svchost 
+3924 svchost 
+3928 svchost 
+3940 svchost 
+4040 svchost 
+4176 svchost 
+4220 svchost 
+4240 svchost 
+5780 svchost 
+5972 svchost 
+6124 svchost 
+6448 svchost 
+6560 svchost C:\WINDOWS\system32\svchost.exe
+6676 svchost C:\WINDOWS\system32\svchost.exe
+6716 svchost C:\WINDOWS\system32\svchost.exe
+6748 svchost C:\WINDOWS\system32\svchost.exe
+6868 svchost 
+7092 svchost 
+7132 svchost 
+7364 svchost C:\WINDOWS\system32\svchost.exe
+7500 svchost C:\WINDOWS\system32\svchost.exe
+7520 svchost 
+7780 svchost 
+7796 svchost 
+8684 svchost 
+9048 svchost C:\WINDOWS\system32\svchost.exe
+9088 svchost 
+9756 svchost 
+9780 svchost 
+10492 svchost 
+10876 svchost 
+10992 svchost 
+11672 svchost 
+12268 svchost 
+13148 svchost 
+13792 svchost 
+14428 svchost 
+14784 svchost 
+--- SEARCH ---
+C:\Users\ABC\Desktop\Cheats\2\RRTool_Public_NoKey\1_run\payload\hotkeys.log 21:09:54

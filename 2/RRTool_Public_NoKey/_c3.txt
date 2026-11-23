@@ -1,0 +1,7 @@
+﻿GAME=0
+PAY_FILES=7
+STATUS_TAIL:
+827625 pid=13904 n=6 inst=1 world=253D9F1A000 snap=0ms hz=677 status=[characters=6 camera=model ex=1 [hits=12 cands=3 accepted=25181FB8C70] tick=50ms]
+832359 pid=13904 n=6 inst=1 world=253D9F1A000 snap=0ms hz=667 status=[characters=6 camera=model ex=1 [hits=12 cands=3 accepted=25181FB8C70] tick=50ms]
+836781 pid=13904 n=5 inst=1 world=253D9F1A000 snap=0ms hz=672 status=[characters=5 camera=model ex=2 [hits=12 cands=3 accepted=25181FB8C70] tick=50ms]
+842125 pid=13904 n=5 inst=1 world=253D9F1A000 snap=0ms hz=382 status=[characters=5 camera=model ex=0 [hits=12 cands=3 accepted=25181FB8C70] tick=50ms]

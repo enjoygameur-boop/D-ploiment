@@ -1,0 +1,48 @@
+﻿    last_update = now;
+    int group = b->aa_bone;
+    RECT rc;
+    int vw = g_sw, vh = g_sh;
+    if (g_hwnd && GetClientRect(g_hwnd, &rc)) { vw = rc.right; vh = rc.bottom; }
+    float cx = vw * 0.5f, cy = vh * 0.5f;
+    RR_AIM_PICK pick = rr_aim_pick(g_render, g_nrender, &g_rcam, vw, vh, b,
+                                  locked_addr, locked_id, b->aa_los_on ? aa_clear_path : NULL);
+    if (!pick.player) {
+        steer = (RR_AIM_STEER){0};
+        last_position_at = 0;
+        return;
+    }
+    const RR_PLAYER* p = pick.player;
+    if (!locked_addr || last_group != group) {
+        steer = (RR_AIM_STEER){0};
+    } else {
+        RR_V3 predicted;
+        float sx, sy;
+        if (last_position_at && p->addr == locked_addr && !p->inveh &&
+            rr_aim_motion_point(pick.point, p->pos, last_position,
+                                            snapshot_at - last_position_at, now - snapshot_at,
+                                            b->aa_smooth, &predicted) &&
+            game_w2s(&g_rcam, &predicted, vw, vh, &sx, &sy)) {
+            float dx = sx - cx, dy = sy - cy;
+            if (isfinite(dx) && isfinite(dy) &&
+                (!b->aa_los_on || aa_clear_path(g_rcam.pos, predicted))) {
+                pick.dx = dx;
+                pick.dy = dy;
+            }
+        }
+    }
+    locked_addr = p->addr;
+    locked_id = p->id;
+    last_group = group;
+    last_position = p->pos;
+    last_position_at = snapshot_at;
+    int mx, my;
+    rr_aim_step(&steer, pick.dx, pick.dy, g_rcam.fov, vh, b->aa_smooth, b->aa_aim_cal,
+                elapsed, (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0, b->aa_stick, &mx, &my);
+    if (mx || my)
+        hklogf("aim: move mx=%d my=%d dist=%.1f err=(%.1f,%.1f)", mx, my, p->dist,
+               pick.dx, pick.dy);
+    aa_move_mouse(mx, my);
+}
+
+/* Threads. */
+

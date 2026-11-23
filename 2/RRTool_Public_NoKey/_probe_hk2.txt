@@ -1,0 +1,34 @@
+﻿/* Hotkey input arrives from four sources (hotkey, hook, raw input, polling),
+ * and they can run on different threads. Serialize the log so a line from one
+ * source cannot be interleaved with another's. */
+static CRITICAL_SECTION g_hk_log_cs;
+static volatile LONG g_hk_log_ready;
+
+static void hklogf(const char* fmt, ...) {
+    char path[MAX_PATH];
+    GetModuleFileNameA(NULL, path, MAX_PATH);
+    char* slash = strrchr(path, '\\');
+    if (slash) *(slash + 1) = 0; else path[0] = 0;
+    strncat(path, "hotkeys.log", MAX_PATH - strlen(path) - 1);
+    if (!g_hk_log_ready) {
+        if (InterlockedCompareExchange(&g_hk_log_ready, 1, 0) == 0)
+            InitializeCriticalSection(&g_hk_log_cs);
+    }
+    if (g_hk_log_ready) EnterCriticalSection(&g_hk_log_cs);
+    FILE* f = fopen(path, "a");
+    if (f) {
+        fprintf(f, "%lu ", (unsigned long)GetTickCount());
+        va_list ap;
+        va_start(ap, fmt);
+        vfprintf(f, fmt, ap);
+        va_end(ap);
+        fputc('\n', f);
+        fclose(f);
+    }
+    if (g_hk_log_ready) LeaveCriticalSection(&g_hk_log_cs);
+}
+
+
+static DWORD g_menu_open_at;
+
+static void hk_action(int id) {

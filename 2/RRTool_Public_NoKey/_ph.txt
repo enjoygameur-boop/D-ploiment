@@ -1,0 +1,50 @@
+﻿
+typedef struct { uint64_t inst; int8_t knocked; } rr_phase_cache_t;
+static rr_phase_cache_t g_phase_cache[8];
+static int g_phase_next;
+
+/* Resolve <KnockedOut> through the class statics of the phase description.
+ * Cross-check only: the static-blob offset is unproven in this port. */
+static uint64_t rr_knocked_by_static(uint64_t any_phase)
+{
+    uint64_t k, sf, inst;
+
+    if (!PL(any_phase)) return 0;
+    k = u_klass(any_phase);
+    if (!k || !class_named(k, "KnockoutPhaseDescription")) return 0;
+    sf = u_static_fields(k);
+    if (!PL(sf)) return 0;
+    inst = rr_u64(sf + RR_OFF_PHASE_KNOCKEDOUT);
+    return PL(inst) ? inst : 0;
+}
+
+/* Classify one phase instance once: 1 knocked, 0 not, -1 unknown.
+ * The verdict comes from the EnumItem name; the static instance and the index
+ * are only logged, to be promoted once proven. */
+static int rr_phase_verdict(uint64_t inst)
+{
+    char id[48];
+    uint64_t p;
+    int i, by_str, by_static;
+    int32_t idx = -1;
+
+    if (!PL(inst)) return -1;
+    for (i = 0; i < 8; i++) if (g_phase_cache[i].inst == inst) return g_phase_cache[i].knocked;
+
+    if (!rr_read(inst + RR_OFF_DESC_NAME, &p, sizeof(p)) || !PL(p)) return -1;
+    if (u_string(p, id, sizeof(id)) <= 0) return -1;
+
+    by_str = strstr(id, "knock") != NULL || strstr(id, "Knock") != NULL;
+    by_static = inst == rr_knocked_by_static(inst);
+    rr_read(inst + RR_OFF_ENUM_INDEX, &idx, sizeof(idx));
+    dlog("knock phase id='%s' idx=%d str=%d static=%d%s", id, idx, by_str, by_static,
+         by_str != by_static ? " MISMATCH" : "");
+
+    i = g_phase_next++ & 7;
+    g_phase_cache[i].inst = inst;
+    g_phase_cache[i].knocked = (int8_t)by_str;
+    return by_str;
+}
+
+/* 1 when the character is knocked out. The state model sits on the character
+ * (RR_OFF_CHAR_STATE), the knockout model on that state model, and the phase is

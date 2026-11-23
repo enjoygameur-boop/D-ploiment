@@ -1,0 +1,84 @@
+﻿### DRAW28
+}
+
+/* Map replicated role names to marker colors for cops, robbers and civilians. */
+static RGBA role_color(const char* role) {
+    if (strstr(role, "cop")) return RRGB(90, 170, 255);
+    if (strstr(role, "robber")) return RRGB(255, 86, 86);
+    if (strstr(role, "hubber") || strstr(role, "civilian")) return RRGB(220, 220, 220);
+    if (strstr(role, "citizen")) return RRGB(200, 230, 200);
+    return 0;
+}
+
+static RGBA player_color(const RR_PLAYER* p) {
+    if (p->relationships & RR_REL_CLAN) return RRGB(218, 153, 255);
+    if (p->relationships & RR_REL_POLICE) return RRGB(86, 255, 246);
+    if (p->dead) return slot_color(5);
+    RGBA color = role_color(p->role);
+    return color ? color : slot_color(0);
+}
+
+static void corner_box(float x, float y, float w, float h, RGBA col, float stroke) {
+### DLOG
+aio_launcher.c:94: * writes status.log, robrun_runtime.txt and CoreRR.cfg. */
+aio_launcher.c:545: path_join(dir, L"masq.txt", track, _countof(track));
+aio_launcher.c:1206: path_join(base, L"robrun_runtime.txt", rt, _countof(rt));
+aio_launcher.c:1211: log_add(L"moved robrun_runtime.txt aside for a clean rescan");
+aio_launcher.c:1213: log_add(L"deleted robrun_runtime.txt for a clean rescan");
+aio_launcher.c:1243: path_join(g_workdir, L"masq_overlay.txt", track, _countof(track));
+aio_launcher.c:1262: path_join(dir, L"robrun_runtime.txt", src, _countof(src));
+aio_launcher.c:1263: path_join(tmp, L"robrun_runtime.txt", dst, _countof(dst));
+aio_launcher.c:1265: path_join(dir, L"robrun_chain.txt", src, _countof(src));
+aio_launcher.c:1266: path_join(tmp, L"robrun_chain.txt", dst, _countof(dst));
+rr_esp.c:1154: const char* tmp = "selftest_chain.txt";
+rr_esp.c:1223: chain_load("robrun_chain.txt");
+rr_esp.c:1408: static void rr_log_stack(EXCEPTION_POINTERS* ep, FILE* f) {
+rr_esp.c:1458: rr_log_stack(ep, f);
+rr_game.c:34: static void dlog(const char* fmt, ...) {
+rr_game.c:58: #define RUNTIME_FILE "robrun_runtime.txt"
+rr_game.c:448: snprintf(out, n, "%s\\robrun_runtime.txt", dir);
+rr_game.c:1086: FILE* cands = fopen("gomcands.txt", "r");
+rr_game.c:5002: chain_load("robrun_chain.txt");
+rr_chain.h:1: /* rr_chain.h - Named address expressions loaded from robrun_chain.txt.
+rr_chain.h:24: /* Load robrun_chain.txt from the supplied path and return the symbol count.
+### ROLES
+rr_draw.c:30: /* Map replicated role names to marker colors for cops, robbers and civilians. */
+rr_draw.c:31: static RGBA role_color(const char* role) {
+rr_draw.c:32: if (strstr(role, "cop")) return RRGB(90, 170, 255);
+rr_draw.c:33: if (strstr(role, "robber")) return RRGB(255, 86, 86);
+rr_draw.c:34: if (strstr(role, "hubber") || strstr(role, "civilian")) return RRGB(220, 220, 220);
+rr_draw.c:35: if (strstr(role, "citizen")) return RRGB(200, 230, 200);
+rr_draw.c:43: RGBA color = role_color(p->role);
+rr_draw.c:292: static void fmt_copy(char* out, size_t n, const char* a, const char* b) {
+rr_draw.c:412: * role colors used for its occupants. */
+rr_draw.c:505: const char* name = p->name[0] ? p->name : (p->is_vehicle == 2 ? "Helicopter" : "Car");
+rr_draw.c:596: if (b->show_name && (p->role[0] || p->relationships) && near_player) {
+rr_draw.c:601: else if (strstr(p->role, "cop")) rt = "COP";
+rr_draw.c:602: else if (strstr(p->role, "robber")) rt = "ROBBER";
+rr_draw.c:603: else if (strstr(p->role, "hubber")) rt = "CIVILIAN";
+rr_draw.c:604: else if (!strstr(p->role, "citizen")) rt = 0;
+rr_draw.c:606: /* Draw a filled role badge: blue for cops, red for robbers, green for citizens. */
+rr_draw.c:618: if (p->local) fmt_copy(label, sizeof(label), "YOU", 0);
+rr_draw.c:619: else if (p->name[0]) fmt_copy(label, sizeof(label), p->name, 0);
+rr_draw.c:633: if (p->veh[0]) fmt_copy(vbuf, sizeof(vbuf), "IN ", p->veh);
+rr_draw.c:634: else fmt_copy(vbuf, sizeof(vbuf), "IN VEHICLE", 0);
+rr_game.c:6: * copies published entries under a lock, then reads transforms and rigs.
+rr_game.c:143: char     role[20];
+rr_game.c:218: char role[20];
+rr_game.c:438: /* A stable cache location: a masqueraded copy runs from a temp folder, so the
+rr_game.c:1590: typedef struct { char id[20]; int8_t civil; } rr_role_cache_t;
+rr_game.c:1591: static rr_role_cache_t g_role_cache[8];
+rr_game.c:1592: static int g_role_next;
+rr_game.c:1594: /* Classify one role string once: 1 civilian, 0 other, -1 empty.
+rr_game.c:1595: * The verdict comes from the replicated PlayerRoleDescription name, which
+rr_game.c:1597: * the literal is checked against the live roles instead of trusted.
+rr_game.c:1599: static int rr_role_verdict(const char* role)
+rr_game.c:1603: if (!role || !role[0]) return -1;
+rr_game.c:1605: if (g_role_cache[i].id[0] && !strcmp(g_role_cache[i].id, role))
+rr_game.c:1606: return g_role_cache[i].civil;
+rr_game.c:1608: v = !strcmp(role, "citizen") || !strcmp(role, "civilian");
+rr_game.c:1609: dlog("role id='%s' civil=%d", role, v);
+rr_game.c:1611: i = g_role_next++ & 7;
+rr_game.c:1612: snprintf(g_role_cache[i].id, sizeof(g_role_cache[i].id), "%s", role);
+rr_game.c:1613: g_role_cache[i].civil = (int8_t)v;
+rr_game.c:1617: /* 1 when the role is a civilian. Cops and criminals stay targetable. */

@@ -1,0 +1,24 @@
+[1/9] rr_esp.c
+rr_esp.c
+[2/9] rr_game.c
+rr_game.c
+[3/9] rr_mem.c
+rr_mem.c
+rr_mem.c(400): warning C4267: '='ÿ: conversion de 'size_t' en 'ULONG', perte possible de donn‚es
+rr_mem.c(421): warning C4267: '='ÿ: conversion de 'size_t' en 'ULONG', perte possible de donn‚es
+[4/9] rr_unity.c
+rr_unity.c
+[5/9] rr_chain.c
+rr_chain.c
+[6/9] rr_draw.c
+rr_draw.c
+rr_aim.c
+rr_aim.c(125): error C2018: le caractŠre ® U+60 ¯ n'est pas autoris‚ ici
+rr_aim.c(125): error C2018: le caractŠre ® U+60 ¯ n'est pas autoris‚ ici
+rr_aim.c(125): error C2146: erreur de syntaxeÿ: absence de ')' avant l'identificateur 'n'
+rr_aim.c(125): error C2081: 'r'ÿ: nom non conforme dans la liste de paramŠtres formels
+rr_aim.c(125): error C2061: erreur de syntaxeÿ: identificateur 'n'
+rr_aim.c(125): error C2059: erreur de syntaxeÿ: ';'
+rr_aim.c(125): error C2059: erreur de syntaxeÿ: 'type'
+rr_aim.c(125): error C2059: erreur de syntaxeÿ: ')'
+BUILD_FAIL

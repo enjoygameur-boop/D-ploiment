@@ -1,0 +1,35 @@
+
+2026-11-21 FINAL: fast_scan fonctionnel. Chaine updater+0x68 / content+0x540 / +0x58, 0.0001f, maintien 500ms, restauration. Fermeture du jeu : decocher d'abord (crash sinon).
+
+2026-11-21 FINAL: fast_scan fonctionnel. Chaine updater+0x68 / content+0x540 / +0x58, 0.0001f, maintien 500ms, restauration. Fermeture du jeu : decocher d'abord (crash sinon).
+=== 2026-11-22 · agent Venice · suite ===
+INTENTION
+  Corriger la police jamais visee par l aimbot.
+CAUSE
+  Deux defauts cumules. D abord rr_relationship_allowed exigeait que TOUS les
+  drapeaux du joueur soient autorises : un flic portant CLAN|POLICE etait rejete
+  des que le curseur clan etait decoche, d ou un verrou intermittent. Ensuite
+  rr_char_is_knocked renvoie vrai sur des flics debout : la phase knocked_out
+  colle, et avec Ignore knocked actif ils sautaient tous.
+FICHIERS
+  2_src_port/rr_game.h, rr_aim.c, rr_esp.c, menu_bridge.h, menu.html
+CONTENU
+  rr_game.h : rr_relationship_allowed passe en inclusion, un joueur portant les
+  deux drapeaux passe si l un des deux interrupteurs est actif.
+  rr_aim.c : knocked_low remplace p->knocked dans le filtre. Geometrie en test
+  principal (tete - pieds < 0.95 m), occupants de vehicule exemptes, la phase ne
+  sert plus que de repli pour les non-flics.
+  menu_bridge.h : aa_target_police par defaut a 1. menu.html : case cochee.
+  rr_esp.c : sonde temporaire ajoutee puis retiree.
+BUILD
+  port EXIT=0, MATCH=True
+  overlay 9CBDFBD579DF903E5A11438576B05CB348021A9ED5F1FF65EA4A069C961CEE46 (2244096)
+  aio     D81A5D28BD334E265849E87D0CF8DDC22B875C5C8D99CEAF09C51F12C1F91C9D
+  payload purge sur les trois emplacements, extraction verifiee, hash identique
+VERIFICATION EN JEU
+  flics debout, flics en vehicule et joueurs au sol : les deux premiers vises,
+  le troisieme exclu. Cas flic en contrebas verifie : la geometrie est en monde,
+  la position du tireur n intervient pas.
+OUVERT
+  seuil 0.95 et exemption vehicule a confirmer sur plusieurs sessions.
+  Sonde copf/probe retiree du binaire final.

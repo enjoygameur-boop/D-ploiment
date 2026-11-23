@@ -1,0 +1,60 @@
+=== MAINTENANCE fast_scan ? tout ce qui casse et comment le refaire ===
+But : revelation instantanee du contenu des contenants.
+Principe : ecrire 0.0001f dans le champ du ScriptableObject global.
+
+--- A. CE QUI FAIT MARCHER LA FONCTION ---
+A1 chemin de pointeurs, sans balayage :
+   BattleEntitiesUpdater +0x68 -> BattleScreenContent
+   BattleScreenContent +0x540 -> InventoryRevealViewDescriptions
+   InventoryRevealViewDescriptions +0x58 -> float a ecraser (0.0001f)
+A2 source de l'updater : g_views_updater dans rr_game.c, expose par
+   rr_game_views_updater() (declaration extern dans rr_exp.c).
+A3 patches de code, cinq sites RVA, avec octets d'origine en dur :
+   get  0x843A30  F3 0F 10 41 58 C3 -> 0F 57 C0 C3 (puis 58)
+   set  0x900920  F3 0F 11 49 58 C3 CC CC CC -> C7 41 58 00 00 00 00 C3
+   dly1 0xA5D5C4  F3 0F 5F 83 A0 00 00 00 -> 0F 57 C0 90 90 90 90 90
+   dly2 0xA5E722  F3 0F 5F 53 38 -> 0F 57 D2 90 90
+   dly3 0xA5E754  F3 0F 5F 53 3C -> 0F 57 D2 90 90
+   Note : get et set sont inlines, zero appel dans le binaire. Les trois dly
+   seuls ne suffisent pas. Le levier reel est A1.
+A4 restauration : valeurs d'origine des instances et octets d'origine au decochage.
+
+--- B. COMMENT REFAIRE APRES UNE MISE A JOUR ---
+B1 dumper la nouvelle build :
+   Il2CppDumper v6.8.2 (metadata v39), GameAssembly.dll + global-metadata.dat.
+B2 relire dans dump.cs, classe BattleEntitiesUpdater (TypeDefIndex 5524) :
+   le champ de type BattleScreenContent et son offset  (etait 0x68)
+B3 relire dans dump.cs, classe BattleScreenContent (TypeDefIndex 5530) :
+   le champ k__BackingField et son offset (etait 0x540)
+B4 relire dans dump.cs, classe InventoryRevealViewDescriptions (TypeDefIndex 7123) :
+   l'offset de k__BackingField (etait 0x58)
+B5 si un offset a change, mettre a jour chain_collect() dans rr_exp.c
+   (lignes content = rr_u64(updater + 0x68) et desc = rr_u64(content + 0x540))
+   et EXP_OFF.
+B6 pour les RVA des dly : chercher les motifs dans GameAssembly.dll,
+   offset fichier = RVA - 0x1A00 dans .text. Motifs :
+   F3 0F 5F 83 A0 00 00 00 / F3 0F 5F 53 38 / F3 0F 5F 53 3C
+   puis mettre a jour EXP_DLY1_RVA, EXP_DLY2_RVA, EXP_DLY3_RVA et les octets.
+B7 get et set : RVAs dans dump.cs (get_TimeToOneCellBorder, set_...), motifs
+   F3 0F 10 41 58 et F3 0F 11 49 58. Mettre a jour EXP_GET_RVA / EXP_SET_RVA.
+
+--- C. CONTROLES DE COHERENCE ---
+C1 RVA = Offset + 0x1A00 pour tout ce qui est dans .text.
+C2 le champ doit etre un float et l'offset multiple de 4.
+C3 un offset plausible pour A1 est entre 0x40 et 0x100 ; au-dela, verifier la classe.
+C4 si chain fail revient sans arret, c'est A1 qui est faux, pas A3.
+
+--- D. PROCEDURE DE TEST ---
+D1 build_port, purge payload, build_aio, relance pour extraction, hash identique.
+D2 entree en partie, Fast scan coche.
+D3 journal attendu : module, get ok, set ok, dly1..3 ok, INST, zeroed.
+D4 verification en jeu sur un contenant du monde.
+D5 decochage : unpatched * et restored.
+
+--- E. PIEGES ---
+E1 le getter et le setter sont inlines : les patcher ne change rien seul.
+E2 EOS ferme Cheat Engine et bloque ses lectures ; notre driver passe.
+E3 changer le driver impose un redemarrage, pas le port.
+E4 ne jamais editer le source par .Replace() : par index de ligne, avec ancre.
+E5 le log vit dans %LOCALAPPDATA%\Temp\rr_exp.log.
+E6 deux drivers charges en meme temps se genent.

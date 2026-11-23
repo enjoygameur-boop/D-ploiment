@@ -1,0 +1,268 @@
+PASSATION - RRTool / RobRun - fonctionnalite d aim SUIVANTE
+==========================================================
+Ecrite apres la livraison de "Ignore knocked". La fonctionnalite suivante
+etant aussi une fonction d aim, elle reutilise directement une partie de ce
+travail : meme section de menu, meme filtre, meme config, memes helpers,
+meme procedure de deploiement. Lire ce document en entier avant d ecrire
+une ligne.
+
+----------------------------------------------------------
+1. ETAT VALIDE EN JEU
+----------------------------------------------------------
+"Ignore knocked" fonctionne : option cochee, l aimbot ignore un joueur au
+sol et continue de viser les debout. Rien d autre n a regresse.
+Port de reference : 2239488 o, hash 7BF8F0F01B54855A.
+Fichiers sources valides sauvegardes en *.OK_knock dans 2_src_port.
+Sauvegarde complete zip a la racine (SAVE_FULL_knock_*).
+
+----------------------------------------------------------
+2. CODE EN PLACE, A REUTILISER
+----------------------------------------------------------
+Toute fonctionnalite d aim suit le meme trajet. Les emplacements ci-dessous
+sont ceux de la fonctionnalite knocked ; les numeros de ligne derivent,
+chercher par motif.
+
+- rr_game.h, pres de "dead" : champ d etat dans RR_PLAYER
+      int knocked;
+- rr_game.c, snapshot_read, apres la reprise de hidden_in_object :
+      if (cfg->aa_ignore_knocked) p->knocked = rr_char_is_knocked(snap[i].obj);
+  Le calcul est conditionne par le reglage : option decochee = aucun cout,
+  aucun changement de comportement. Conserver ce schema.
+- rr_aim.c, ligne du filtre de cible : ajouter le champ au "continue".
+      if (!p->addr || !p->valid || p->dead || p->knocked || ...) continue;
+- rr_esp.c, hash de cache de rendu : MIX du nouveau champ, sinon l affichage
+  se fige.
+      MIX(p->dead); MIX(p->knocked); MIX(p->armor);
+- rr_esp.c, bloc de defauts de config : written.<champ> = 1;
+  et dans la condition de rechargement : loaded.<champ> == 1 &&
+- menu_bridge.h, liste X(...) : X(nouveau_champ, 0, 0, 1)
+- menu.html, section Targeting : label avec data-key="nouveau_champ".
+  menu.html est compile dans l exe par app.rc a chaque build_port, rien a
+  regenerer a la main.
+
+Helpers de detection, rr_game.c, juste apres hidden_object_position :
+cache de phases 8 emplacements + rr_knocked_by_static (croisement) +
+rr_phase_verdict (verdict par nom d EnumItem, log une fois par instance) +
+rr_char_is_knocked.
+
+----------------------------------------------------------
+3. FAITS VERIFIES SUR LA CHAINE ET LE RUNTIME
+----------------------------------------------------------
+- Character -> modele d etat : character + 0x1E0 (RR_OFF_CHAR_STATE),
+  valider avec u_is(..., "BattleCharacterStateModel").
+- Modele d etat -> modele knockout : + 0x30 (RR_OFF_CHAR_KNOCK_MODEL).
+  L offset est SUR LE MODELE D ETAT, pas sur le character.
+- Modele knockout -> conteneur de phase : + 0x18 (RR_OFF_KNOCK_PHASE).
+- Conteneur : classe runtime "ReferenceData`1" (derive de
+  NullablePrimitiveData<T> -> BasePrimitiveData<T>, champs _serializer 0x10
+  puis _value 0x18). La valeur se lit donc a + 0x18 (RR_OFF_REF_VALUE).
+- Valeur non nulle = instance "KnockoutPhaseDescription".
+  Nom runtime de la phase de knockout : "knocked_out", EN MINUSCULES avec
+  underscore. Un test sensible a la casse sur "Knock" ne matche pas.
+- EnumItem : nom a + 0x10 (RR_OFF_DESC_NAME), Index a + 0x18
+  (RR_OFF_ENUM_INDEX). Index de knocked_out observe : 0.
+- Valeur nulle a + 0x18 = joueur debout, cas normal.
+- La phase se lit SANS appel distant, uniquement par pointeurs.
+
+----------------------------------------------------------
+4. PROCEDURE DE BUILD ET DE DEPLOIEMENT
+----------------------------------------------------------
+1. build_port.bat par chemin absolu depuis 2_src_port. Zero erreur, exe
+   horodate a l instant. Ne jamais continuer avec un binaire perime.
+2. Purger 2_src_port\payload, le realimenter (kd2.exe, kernel-mode.sys,
+   WebView2Loader.dll depuis 1_run\payload) et y copier le nouveau port.
+   Comparer les SHA-256 : MATCH obligatoire.
+3. build_aio.bat, TOUJOURS apres build_port.
+4. Verifier que 1_run\RobRunPort.exe (que build_port recopie ligne 75) a le
+   meme hash que la source. C est CE fichier que l AIO embarque, pas
+   2_src_port\payload.
+5. Installer l AIO dans 1_run et comparer les SHA-256 : MATCH obligatoire.
+6. Tuer le jeu et l overlay avant de copier, puis supprimer les exe
+   residuels de %LOCALAPPDATA%\Temp (> 2 Mo).
+7. Redemarrage Windows UNIQUEMENT si le driver a change. Un port seul se
+   teste par simple relance.
+
+----------------------------------------------------------
+5. VERIFICATIONS OBLIGATOIRES AVANT DE TESTER
+----------------------------------------------------------
+- L overlay extrait dans %LOCALAPPDATA%\Temp doit porter le hash du port
+  fraichement compile. L overlay prend un nom de masquage variable
+  (taskhostw, smartscreen, sihost, ctfmon, SearchProtocolHost...).
+  Le controler par taille et par hash, jamais par nom.
+- Un overlay de la session precedente encore vivant verrouille la
+  destination : le lanceur echoue avec 0x20 et rejoue l ancien port.
+  Toujours nettoyer avant de relancer.
+- Le journal du port (dlog) s ecrit dans discovery.log, dans le repertoire
+  courant de l overlay, donc %LOCALAPPDATA%\Temp. Si la copie de masquage
+  echoue, il s ecrit dans 1_run\payload. Verifier les deux.
+- Le log du lanceur (aio.log) ne contient que le demarrage, pas le dlog.
+
+----------------------------------------------------------
+6. POINTS OUVERTS
+----------------------------------------------------------
+- Le reglage ne survit pas toujours a un redemarrage : un "flag=0" a ete
+  observe en cours de session alors que l option etait cochee. A traiter
+  separement, ce n est pas un probleme d offset.
+- p->dead n est JAMAIS assigne dans le chemin reel. Le filtre de cadavres
+  n existe donc pas. La chaine correcte est connue : modele d etat + 0x10
+  (_isDeadModel, IPrimitiveModel<bool>) -> + 0x10 (donnee BoolData) ->
+  + 0x18 (valeur), cf. rr_esp.c vers la ligne 1560.
+- RR_OFF_CHAR_ISDEAD vaut 0xF0 et ne sert a rien : la valeur juste est 0x10
+  sur le modele d etat. Code mort.
+- RR_OFF_KNOCK_FORWARD et RR_OFF_KNOCK_PHASE valent tous deux 0x18 ;
+  RR_OFF_KNOCK_ENDTS et RR_OFF_KNOCKDOWN_ENDTS tous deux 0x10. Verifier le
+  modele vise avant de les reutiliser.
+- Le croisement par instance statique (rr_knocked_by_static) n est que
+  journalise, jamais utilise pour le verdict. L offset du blob statique
+  (RR_OFF_PHASE_KNOCKEDOUT 0x08) n est pas prouve.
+- Le repli sur _endTs a ete retire : phase inconnue = pas au sol.
+
+----------------------------------------------------------
+7. ERREURS DEJA COMMISES, A NE PAS REFAIRE
+----------------------------------------------------------
+- Lire _isDeadModel (0x10 du modele) a 0xF0 : tout le monde devient mort,
+  couleur 5, role/armure/arme masques, aimbot muet.
+- Lire le modele knockout sur character + 0x30 au lieu du modele d etat.
+- Traiter le conteneur ReferenceData`1 comme un booleen, ou sa valeur comme
+  une instance de phase sans valider la classe.
+- Tester le nom de phase en "Knock" alors que le runtime dit "knocked_out".
+- Confondre down et mort : deux champs, deux filtres.
+- En PowerShell 5.1, "if" n est pas une expression : ecrire $(if (...){}).
+  Dans un motif de fin de ligne CRLF, [ \t]*$ ne matche pas : utiliser
+  \r?$.
+- Faire confiance a l horodatage : seuls les hash prouvent quelque chose.
+
+----------------------------------------------------------
+8. REFERENCES DUMP
+----------------------------------------------------------
+- BattleCharacterStateModel : dump.cs 194850, _isDeadModel 0x10,
+  _knockoutModel 0x30, get_Value RVA 0x49DBF20 Slot 4.
+- KnockoutModel : dump.cs 173084, _endTs 0x10, _knockoutPhase 0x18,
+  bools IsSurrendered/IsHandcuffing/IsHandcuffed 0x70/0x71/0x72.
+- KnockoutPhaseDescription : dump.cs 90843, statiques KnockedOut et
+  DelayAfterRevive.
+- ReferenceData<T> : dump.cs 1957245. BasePrimitiveData<T> : 1956649,
+  _serializer puis _value.
+- Ne jamais inverser offset de fichier et RVA : 0x1000 d ecart.
+- Fork Il2CppDumper TetzkatLipHoka v6.8.2 obligatoire (metadata v39).
+
+----------------------------------------------------------
+9. INVENTAIRE DES FICHIERS TOUCHES PAR LA FONCTIONNALITE
+----------------------------------------------------------
+2_src_port\rr_game.c, rr_game.h, rr_aim.c, rr_esp.c, menu_bridge.h,
+aio_launcher.c (suppression du raccourci de taille dans extract_resource),
+robrun_sdk_offsets.h (defines, code mort conserve).
+Copies de securite : meme noms suffixe .OK_knock.
+
+----------------------------------------------------------
+10. A FAIRE EN ARRIVANT
+----------------------------------------------------------
+Lire ce document, relire le corps de rr_char_is_knocked et rr_phase_verdict,
+puis proposer l implementation en reutilisant la meme structure : champ dans
+RR_PLAYER, calcul conditionne par un reglage, filtre dans rr_aim.c, MIX,
+defaut de config, entree de menu. Une modification par message, un controle
+par etape, aucun test sans avoir verifie le hash de l overlay en jeu.
+----------------------------------------------------------
+11. ARBORESCENCE (2 NIVEAUX)
+----------------------------------------------------------
+ROOT
+     273  .gitignore
+   14508  BUILD.md
+     372  build_aio.log
+     372  build_aio2.log
+    1984  build_port.log
+      18  fi.log
+    9086  HANDOFF_aim_suivant.txt
+     356  JOURNAL_AGENT.txt
+    3340  MAINTENANCE_fast_scan.txt
+   11697  README.md
+471945173  SAVE_FULL_knock_20261121_2301.zip
+16575782  SAVE_knock_20261121_2300.zip
+    6496  SINGLE_BUILD.md
+
+[1_run]
+14 fichiers / 1 dossiers
+  <d> payload
+
+[2_src_port]
+114 fichiers / 3 dossiers
+  <d> brand
+  <d> payload
+  <d> WebView2SDK
+    64814  aio_launcher.c
+      610  aio_resources.h
+      108  app_resources.h
+      203  brand_resources.h
+     3104  gpu.h
+     3453  menu_bridge.h
+     4827  robrun_offsets.h
+    10249  robrun_sdk_offsets.h
+    11435  rr_aim.c
+     2021  rr_aim.h
+      941  rr_body_joints.h
+     5897  rr_chain.c
+     1923  rr_chain.h
+     1100  rr_cham_anchors.h
+     1179  rr_cham_coherence.h
+   535879  rr_cham_model.h
+     3115  rr_cham_types.h
+    29453  rr_classscan.c
+    32256  rr_draw.c
+      800  rr_draw.h
+   120807  rr_esp.c
+    46038  rr_exp.c
+       22  rr_exp.h
+     3704  rr_find.c
+     1358  rr_find.h
+   264788  rr_game.c
+    11093  rr_game.h
+     9364  rr_hiding.h
+     5419  rr_los.c
+      332  rr_los.h
+    10636  rr_los_capture.c
+     1768  rr_los_capture.h
+     7907  rr_los_geom.c
+     2054  rr_los_geom.h
+     7564  rr_los_runtime.c
+    21375  rr_mem.c
+     4774  rr_mem.h
+     3578  rr_nodescan.c
+     2838  rr_pose_gate.h
+      657  rr_rapid.h
+     2056  rr_rig_map.h
+    21105  rr_spawn.c
+     2561  rr_spawn.h
+     5541  rr_unity.c
+     3362  rr_unity.h
+    64599  rr_vehicle_cham_model.h
+      857  rr_world_marker_select.h
+     1328  wv2_cb.h
+     2897  wv2_cb_impl.h
+
+[3_src_driver]
+7 fichiers / 1 dossiers
+  <d> x64
+
+[4_src_mapper]
+0 fichiers / 1 dossiers
+  <d> kd2_src
+
+[5_src_loader]
+7 fichiers / 1 dossiers
+  <d> brand
+
+[dist]
+0 fichiers / 0 dossiers
+
+[docs]
+2 fichiers / 1 dossiers
+  <d> branding
+
+[offsets]
+3 fichiers / 0 dossiers
+
+[tools]
+4 fichiers / 3 dossiers
+  <d> Il2CppDumper_TetzkatLipHoka_v6.8.2
+  <d> Il2CppDumper_v6.7.46
+  <d> WDK_10.0.26100.6584

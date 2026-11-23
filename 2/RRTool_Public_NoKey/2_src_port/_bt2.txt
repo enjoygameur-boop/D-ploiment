@@ -1,0 +1,5 @@
+﻿                 int smooth, int cal, unsigned elapsed_ms, int firing, int stick,
+                 int* mx, int* my) {
+    *mx = *my = 0;
+    if (!isfinite(dx) || !isfinite(dy) || !(fov > 10.0f && fov < 170.0f) || height < 16) {
+        *state = (RR_AIM_STEER){0};

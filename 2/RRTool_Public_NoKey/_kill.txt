@@ -1,0 +1,2 @@
+﻿KILL=C:\Users\ABC\Desktop\Cheats\2\RRTool_Public_NoKey\kill.ps1
+PROC=0

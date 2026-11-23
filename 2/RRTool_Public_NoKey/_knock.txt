@@ -1,0 +1,52 @@
+﻿### KNOCKED
+rr_char_is_knocked(uint64_t character)
+{
+    uint64_t state, model, wrap, val;
+    int v;
+
+    if (!character) return 0;
+    state = rr_u64(character + RR_OFF_CHAR_STATE);
+    if (!state || !PL(state) || !u_is(state, "BattleCharacterStateModel")) return 0;
+
+    model = rr_u64(state + RR_OFF_CHAR_KNOCK_MODEL);
+    if (!model || !PL(model)) return 0;
+
+    wrap = rr_u64(model + RR_OFF_KNOCK_PHASE);
+    if (!wrap || !PL(wrap)) return 0;
+
+    if (!rr_read(wrap + RR_OFF_REF_VALUE, &val, sizeof(val))) return 0;
+    if (!val || !PL(val) || !u_is(val, "KnockoutPhaseDescription")) return 0;
+
+    v = rr_phase_verdict(val);
+    return v > 0;
+}
+rr_char_is_knocked(snap[i].obj);
+        if (cfg->aa_ignore_civil) p->civil = rr_char_is_civil(snap[i].role);
+        if (!p->local) {
+            if (local_clan[0] && strcmp(local_clan, snap[i].clan_tag) == 0)
+                p->relationships |= RR_REL_CLAN;
+            if (local_is_police && strcmp(snap[i].role, "cop") == 0)
+                p->relationships |= RR_REL_POLICE;
+        }
+### CALLS
+rr_aim.c:27: if (!p->addr || !p->valid || p->dead || p->knocked || p->civil || p->is_vehicle || p->is_loot || p->local || p->hidden_in_object) continue;
+rr_esp.c:465: if (g_render[pi].valid && !g_render[pi].dead && !g_render[pi].knocked &&
+rr_esp.c:468: g_render[pi].valid, g_render[pi].dead, g_render[pi].knocked,
+rr_esp.c:780: MIX(p->id); MIX(p->local); MIX(p->hidden_in_object); MIX(p->dead); MIX(p->knocked); MIX(p->civil); MIX(p->armor); MIX(p->crouch); MIX(p->is_vehicle); MIX(p->is_loot); MIX(p->loot_rarity); MIX(p->occupants); MIX(p->occupants_known);
+rr_esp.c:1077: written.aa_ignore_knocked = 1;
+rr_esp.c:1090: loaded.aa_closest_first == 1 && loaded.aa_ignore_knocked == 1 && loaded.aa_ignore_civil == 1 && loaded.aa_key == VK_RBUTTON && loaded.aa_bone == RR_AIM_FEET && loaded.color[7].rgb[0] == 117,
+rr_game.c:1517: typedef struct { uint64_t inst; int8_t knocked; } rr_phase_cache_t;
+rr_game.c:1521: /* Resolve <KnockedOut> through the class statics of the phase description.
+rr_game.c:1523: static uint64_t rr_knocked_by_static(uint64_t any_phase)
+rr_game.c:1532: inst = rr_u64(sf + RR_OFF_PHASE_KNOCKEDOUT);
+rr_game.c:1536: /* Classify one phase instance once: 1 knocked, 0 not, -1 unknown.
+rr_game.c:1547: for (i = 0; i < 8; i++) if (g_phase_cache[i].inst == inst) return g_phase_cache[i].knocked;
+rr_game.c:1553: by_static = inst == rr_knocked_by_static(inst);
+rr_game.c:1560: g_phase_cache[i].knocked = (int8_t)by_str;
+rr_game.c:1564: /* 1 when the character is knocked out. The state model sits on the character
+rr_game.c:1567: int rr_char_is_knocked(uint64_t character)
+rr_game.c:5375: if (cfg->aa_ignore_knocked) p->knocked = rr_char_is_knocked(snap[i].obj);
+menu_bridge.h:48: X(aa_ignore_knocked, 0, 0, 1) \
+robrun_sdk_offsets.h:40: #define RR_OFF_KNOCK_FORWARD           0x18u  /* Models.Models.Knockdown.KnockdownModel._isKnockedForward */
+robrun_sdk_offsets.h:43: #define RR_OFF_PHASE_KNOCKEDOUT        0x08u  /* Models.References.Knockout.KnockoutPhaseDescription.<KnockedOut> (static blob) */
+rr_game.h:72: int knocked;

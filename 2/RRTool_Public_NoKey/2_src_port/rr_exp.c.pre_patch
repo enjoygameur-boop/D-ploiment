@@ -1,0 +1,246 @@
+/* rr_exp.c - Fast scan: hold the loot reveal duration at zero.
+
+   The reveal delay is the backing field TimeToOneCellBorder at +0x58 of every
+   InventoryRevealViewDescriptions instance. The game rewrites the value, so it
+   must be held while enabled and restored when disabled.
+
+   The class is resolved once by name and cached. Resolution runs on the worker
+   thread, never on the render thread. */
+
+#include <windows.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include "rr_mem.h"
+#include "menu_bridge.h"
+#include "rr_exp.h"
+
+#define EXP_OFF      0x58
+#define EXP_MAX_INST 16
+#define EXP_WRITE_MS 5
+#define EXP_LOG 1
+#define EXP_LOG 1
+
+static const char EXP_NAME[] = "InventoryRevealViewDescriptions";
+#define EXP_NAMELEN ((unsigned)sizeof(EXP_NAME) - 1u)
+
+static volatile LONG g_started, g_enabled, g_ready;
+static DWORD g_arm;
+static uint64_t g_klass, g_klass_tmp;
+static uint64_t g_hit[64];
+static int g_nhit;
+static uint64_t g_inst[EXP_MAX_INST];
+static float    g_orig[EXP_MAX_INST];
+static int      g_ninst;
+
+static void elog(const char* fmt, ...) {
+#if !EXP_LOG
+    return;
+#endif
+#if !EXP_LOG
+    return;
+#endif
+    char path[MAX_PATH], buf[512];
+    FILE* f;
+    va_list ap;
+    if (!GetTempPathA(MAX_PATH, path)) return;
+    strcat(path, "rr_exp.log");
+    f = fopen(path, "a");
+    if (!f) return;
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof buf, fmt, ap);
+    va_end(ap);
+    fprintf(f, "%lu %s\n", GetTickCount(), buf);
+    fclose(f);
+}
+
+static int read_str(uint64_t a, char* out, int cap) {
+    if (!a || cap < 2) return 0;
+    out[0] = 0;
+    if (!rr_read(a, out, (size_t)cap - 1)) return 0;
+    out[cap - 1] = 0;
+    return out[0] != 0;
+}
+
+typedef int (*WALK_FN)(uint64_t, const uint8_t*, unsigned);
+
+static int walk(int mapped, int image, WALK_FN fn) {
+    enum { BATCH = 64, CHUNK = 0x1000 };
+    static uint8_t pool[BATCH * CHUNK];
+    const uint64_t limit = 0x7FFFFFFEFFFFull;
+    uint64_t addr = 0x10000;
+    long wc = 0;
+    RR_REGION rg;
+
+    while (addr < limit) {
+        uint64_t start, end, scan_end, q;
+        if (!rr_query_region(addr, &rg) || !rg.size) { addr += 0x10000; continue; }
+        start = rg.base < 0x10000 ? 0x10000 : rg.base;
+        end = rg.base + rg.size;
+        scan_end = end;
+        if (scan_end > start + 0x800000ull) scan_end = start + 0x800000ull;
+        scan_end = end;
+        if (scan_end > start + 0x800000ull) scan_end = start + 0x800000ull;
+        if (rg.state == 0x1000 && (rg.protect & 0xFF) && !(rg.protect & 0x100) &&
+            (rg.type == 0x20000 || (rg.type == 0x40000 && mapped) ||
+             (rg.type == 0x1000000 && image))) {
+            for (q = start; q < scan_end; q += (uint64_t)BATCH * CHUNK) {
+                RR_RD_REQ req[BATCH];
+                int n = 0, i;
+                for (i = 0; i < BATCH && q + (uint64_t)i * CHUNK < scan_end; i++) {
+                    uint64_t a = q + (uint64_t)i * CHUNK;
+                    unsigned sz = (unsigned)((scan_end - a) < CHUNK ? (scan_end - a) : CHUNK);
+                    req[n].addr = a;
+                    req[n].size = sz;
+                    req[n].dst = pool + (size_t)n * CHUNK;
+                    memset(req[n].dst, 0, sz);
+                    n++;
+                }
+                if (!n) break;
+                if ((++wc % 2000) == 0) elog("walk %llx", (unsigned long long)q);
+                if ((++wc % 2000) == 0) elog("walk %llx", (unsigned long long)q);
+                rr_read_batch(req, n);
+                for (i = 0; i < n; i++)
+                    if (req[i].size && fn(req[i].addr, req[i].dst, req[i].size)) return 1;
+            }
+        }
+        addr = (end > addr) ? end : addr + 0x10000;
+    }
+    return 0;
+}
+
+static int cb_lit(uint64_t base, const uint8_t* p, unsigned len) {
+    unsigned o;
+    if (len < EXP_NAMELEN) return 0;
+    for (o = 0; o + EXP_NAMELEN < len; o++) {
+        if (p[o] != (uint8_t)EXP_NAME[0]) continue;
+        if (memcmp(p + o, EXP_NAME, EXP_NAMELEN)) continue;
+        if (p[o + EXP_NAMELEN]) continue;
+        if (g_nhit < 8) g_hit[g_nhit++] = base + o;
+        if (g_nhit >= 8) return 1;
+    }
+    return 0;
+}
+
+static int cb_ptr(uint64_t base, const uint8_t* p, unsigned len) {
+    char nm[48];
+    unsigned o;
+    int i;
+    for (o = 0; o + 8 <= len; o += 8) {
+        uint64_t v;
+        memcpy(&v, p + o, 8);
+        for (i = 0; i < g_nhit; i++) {
+            uint64_t cand, nsp;
+            uint8_t t;
+            if (v != g_hit[i] || base + o < 0x10) continue;
+            cand = base + o - 0x10;
+            if (!rr_read(cand + 0x18, &nsp, 8)) continue;
+            if (nsp && !rr_read(nsp, &t, 1)) continue;
+            { char dbg[17]; if (!rr_read(cand + 0x10, dbg, 16)) { elog("cand %llx unreadable", (unsigned long long)cand); continue; } dbg[16] = 0; elog("cand %llx [%s]", (unsigned long long)cand, dbg); }
+            if (!name_ok(cand)) continue;
+            g_klass_tmp = cand;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int cb_inst(uint64_t base, const uint8_t* p, unsigned len) {
+    unsigned o;
+    for (o = 0; o + 8 <= len; o += 8) {
+        uint64_t v;
+        float f;
+        memcpy(&v, p + o, 8);
+        if (v != g_klass) continue;
+        if (!rr_read(base + o + EXP_OFF, &f, 4)) continue;
+        if (!(f >= 0.0f && f < 600.0f)) continue;
+        if (g_ninst < EXP_MAX_INST) { g_inst[g_ninst] = base + o; g_orig[g_ninst] = f; g_ninst++; }
+        if (g_ninst >= EXP_MAX_INST) return 1;
+    }
+    return 0;
+}
+
+static int name_ok(uint64_t cand) {
+    uint64_t np = 0;
+    char s[16];
+    if (!rr_read(cand + 0x10, &np, 8) || !np) { elog("no np c=%llx", (unsigned long long)cand); return 0; }
+    if (!rr_read(np, s, sizeof s)) { elog("no str np=%llx", (unsigned long long)np); return 0; }
+    { int m = memcmp(s, EXP_NAME, sizeof s); elog("nok c=%llx m=%d", (unsigned long long)cand, m); return m == 0; }
+}
+
+static int klass_valid(void) {
+    char s[48];
+    return g_klass && read_str(g_klass + 0x10, s, sizeof s) && strcmp(s, EXP_NAME) == 0;
+}
+
+static int resolve(void) {
+    if (!klass_valid()) {
+        g_klass = 0; g_klass_tmp = 0; g_nhit = 0;
+        walk(1, 1, cb_lit);
+        elog("lits=%d", g_nhit);
+        if (!g_nhit) return 0;
+        walk(1, 1, cb_ptr);
+        elog("klass=%llx", (unsigned long long)g_klass_tmp);
+        if (!g_klass_tmp) return 0;
+        g_klass = g_klass_tmp;
+        if (!klass_valid()) { g_klass = 0; return 0; }
+    }
+    g_ninst = 0;
+    walk(0, 0, cb_inst);
+    elog("inst=%d", g_ninst);
+    return g_ninst > 0;
+}
+
+static void hold(void) {
+    static const float z = 0.0f;
+    int i;
+    for (i = 0; i < g_ninst; i++)
+        if (!rr_write(g_inst[i] + EXP_OFF, &z, 4)) { g_ready = 0; return; }
+}
+
+static void restore(void) {
+    int i;
+    for (i = 0; i < g_ninst; i++) rr_write(g_inst[i] + EXP_OFF, &g_orig[i], 4);
+    g_ninst = 0;
+}
+
+static DWORD WINAPI exp_thread(void* p) {
+    DWORD last_try = 0;
+    elog("thread start off=%d size=%d", (int)((char*)&((BR_Config*)0)->exp_fast_scan - (char*)0), (int)sizeof(BR_Config));
+    int held = 0;
+    (void)p;
+    for (;;) {
+        if (!g_enabled) {
+            if (held) { restore(); held = 0; }
+            Sleep(40);
+            continue;
+        }
+        if (!g_ready) {
+            DWORD now = GetTickCount();
+            if (g_arm && now >= g_arm && now - last_try > 3000) {
+                last_try = now;
+                if (held) { restore(); held = 0; }
+                if (resolve()) g_ready = 1;
+            }
+            Sleep(50);
+            continue;
+        }
+        hold();
+        held = 1;
+        Sleep(EXP_WRITE_MS);
+    }
+}
+
+void exp_tick(void) {
+    {
+        static int once = 0, tick = 0;
+        LONG w = br_get()->exp_fast_scan ? 1 : 0;
+        if (!once) { once = 1; g_arm = GetTickCount() + 45000; elog("tick alive"); }
+        if (w != g_enabled) { elog("enabled=%ld", w); if (w) g_arm = GetTickCount() + 2000; }
+        if ((++tick % 600) == 0) elog("still alive w=%ld", w);
+        g_enabled = w;
+    }
+    if (!g_started && InterlockedExchange(&g_started, 1) == 0)
+        CreateThread(NULL, 0, exp_thread, NULL, 0, NULL);
+}

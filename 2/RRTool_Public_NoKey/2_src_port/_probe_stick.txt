@@ -1,0 +1,234 @@
+﻿### TAILLES
+rr_aim.c 257
+rr_aim.c.bad_knock 232
+rr_aim.c.bak_knock 232
+rr_aim.c.OK_knock 232
+rr_aim.h 41
+rr_aim.obj 74
+rr_body_joints.h 21
+rr_chain.c 194
+rr_chain.h 55
+rr_chain.obj 40
+rr_cham_anchors.h 19
+rr_cham_coherence.h 28
+rr_cham_model.h 9651
+rr_cham_types.h 99
+rr_classscan.c 770
+rr_classscan.obj 325
+rr_draw.c 698
+rr_draw.h 31
+rr_draw.obj 3845
+rr_esp.c 2955
+rr_esp.c.avant_dump_mode 2895
+rr_esp.c.OK_knock 2954
+rr_esp.obj 1432
+rr_exp.c 1261
+rr_exp.c.bak_chain 1274
+rr_exp.c.bak_gone 1255
+rr_exp.c.bak_live 1245
+rr_exp.c.bak_phase 1219
+rr_exp.c.FINAL_20261121 1261
+rr_exp.c.OK_20261121 1254
+rr_exp.c.pre_patch 246
+rr_exp.h 1
+rr_exp.obj 148
+rr_find.c 118
+rr_find.h 43
+rr_find.obj 27
+rr_game.c 5750
+rr_game.c.bad_knock 5739
+rr_game.c.bak_knock 5651
+rr_game.c.OK_knock 5753
+rr_game.h 245
+rr_game.h.bad_knock 244
+rr_game.h.bak_knock 243
+rr_game.h.OK_knock 244
+rr_game.obj 1543
+rr_hiding.h 161
+rr_los.c 112
+rr_los.h 10
+rr_los.obj 41
+rr_los_capture.c 165
+rr_los_capture.h 31
+rr_los_capture.obj 35
+rr_los_geom.c 145
+rr_los_geom.h 35
+rr_los_geom.obj 56
+rr_los_runtime.c 130
+rr_los_runtime.obj 26
+rr_mem.c 640
+rr_mem.h 118
+rr_mem.obj 108
+rr_nodescan.c 106
+rr_nodescan.obj 32
+rr_pose_gate.h 57
+rr_rapid.h 16
+rr_rig_map.h 51
+rr_spawn.c 668
+rr_spawn.h 58
+rr_spawn.obj 63
+rr_unity.c 164
+rr_unity.h 91
+rr_unity.obj 29
+rr_vehicle_cham_model.h 860
+rr_world_marker_select.h 21
+----- rr_aim_step -----
+rr_aim_step(RR_AIM_STEER* state, float dx, float dy, float fov, int height,
+                 int smooth, int cal, unsigned elapsed_ms, int firing, int* mx, int* my) {
+    *mx = *my = 0;
+    if (!isfinite(dx) || !isfinite(dy) || !(fov > 10.0f && fov < 170.0f) || height < 16) {
+        *state = (RR_AIM_STEER){0};
+        return;
+    }
+    /* Project to the equivalent error at 1080p / 60 degrees. The same
+     * angular error should produce the same correction at a different zoom. */
+    float scale = (1080.0f / height) * (tanf(fov * 3.14159265f / 360.0f) / 0.57735027f);
+    /* Convert the normalized pixel error to mouse counts using cal. This
+     * ratio depends on the game sensitivity; --aimtest measures it for the current
+     * setup. A value of 100 assumes one count per reference pixel.
+     */
+    if (!(cal > 0)) cal = 100;
+    float calib = (float)cal / 100.0f;
+    scale *= calib;
+    /* Scale the per-step limit with calibration so it represents a similar
+     * angular correction at different sensitivities.
+     */
+    float limit = fmaxf(8.0f, 32.0f * calib);
+    float dt = (float)(elapsed_ms > 24 ? 24 : elapsed_ms);
+    /* Ease the correction in as the error shrinks, so the aim settles onto the
+     * point instead of arriving at full speed. */
+    float ex = fabsf(dx) > fabsf(dy) ? fabsf(dx) : fabsf(dy);
+    float err_deg = atanf((ex * 2.0f / height) / tanf(fov * 3.14159265f / 360.0f)) * 57.295779513f;
+    float slow = err_deg < 8.0f ? 1.0f + 2.0f * (1.0f - err_deg / 8.0f) : 1.0f;
+    float response = aim_response_ms(smooth) * slow;
+    float gain = 1.0f - expf(-dt / response);
+    float vertical_gain = firing ? 1.0f - expf(-dt / (response * 0.8f)) : gain;
+    *mx = aim_axis(dx * scale, gain, limit, &state->carry_x);
+    *my = aim_axis(dy * scale, vertical_gain, limit, &state->carry_y);
+}
+----- aim_axis -----
+aim_axis(float error, float gain, float limit, float* carry) {
+    if (fabsf(error) < 0.05f) {
+        *carry = 0.0f;
+        return 0;
+    }
+    if (error * *carry < 0.0f) *carry = 0.0f;
+    /* A large correction must not be rate-limited by the smoothing limit, or
+     * the first frames after a flick stay behind a fast target. */
+    float need = fabsf(error) * 0.5f;
+    if (need > limit) limit = need < 160.0f ? need : 160.0f;
+    float step = error * gain + *carry;
+    /* Never stall short of the point: one count while the error is a pixel. */
+    if (fabsf(step) < 1.0f && fabsf(error) >= 1.0f) step = error > 0.0f ? 1.0f : -1.0f;
+    step = fmaxf(-limit, fminf(limit, step));
+    int counts = (int)step;
+    *carry = step - counts;
+    return counts;
+}
+----- aim_axis -----
+aim_axis(dx * scale, gain, limit, &state->carry_x);
+    *my = aim_axis(dy * scale, vertical_gain, limit, &state->carry_y);
+}
+
+int rr_aim_bone_in_group(int group, int bone) {
+    if (bone<0 || bone>=RR_CHAM_BONES) return 0;
+    switch (group) {
+    case RR_AIM_HEAD: return bone>=RR_RIG_M_HEAD_1_JNT && bone<=RR_RIG_M_TONGUE_3_JNT;
+    case RR_AIM_NECK: return bone==RR_RIG_M_NECK_JNT || bone==RR_RIG_L_ARM_0_JNT || bone==RR_RIG_R_ARM_0_JNT;
+    case RR_AIM_CHEST: return bone==RR_RIG_M_SPINE_2_JNT || bone==RR_RIG_M_SPINE_3_JNT;
+    case RR_AIM_PELVIS: return bone==RR_RIG_M_SPINE_1_JNT || bone==RR_RIG_L_LEG_1_JNT || bone==RR_RIG_R_LEG_1_JNT;
+    case RR_AIM_ARMS: return (bone>=RR_RIG_L_ARM_0_JNT && bone<=RR_RIG_L_ARM_3_JNT) ||
+                            (bone>=RR_RIG_R_ARM_0_JNT && bone<=RR_RIG_R_ARM_3_JNT) ||
+                            bone==RR_RIG_L_ARMTWIST_JNT || bone==RR_RIG_R_ARMTWIST_JNT;
+    case RR_AIM_LEGS: return (bone>=RR_RIG_L_LEG_1_JNT && bone<=RR_RIG_L_LEG_3_JNT) ||
+                            (bone>=RR_RIG_R_LEG_1_JNT && bone<=RR_RIG_R_LEG_3_JNT);
+    case RR_AIM_FACE: return bone>=RR_RIG_L_EYELIDUP_JNT && bone<=RR_RIG_M_TONGUE_3_JNT;
+    case RR_AIM_HANDS: return (bone>=RR_RIG_L_ARM_3_JNT && bone<=RR_RIG_L_THUMB_3_JNT) ||
+                             (bone>=RR_RIG_R_ARM_3_JNT && bone<=RR_RIG_R_THUMB_3_JNT);
+    case RR_AIM_FEET: return (bone>=RR_RIG_L_LEG_3_JNT && bone<=RR_RIG_L_FOOT_2_JNT) ||
+                            (bone>=RR_RIG_R_LEG_3_JNT && bone<=RR_RIG_R_FOOT_2_JNT);
+    case RR_AIM_CLOSEST: return rr_rig_is_body_joint(bone);
+    default: return 0;
+    }
+}
+----- aim_axis -----
+aim_axis(dy * scale, vertical_gain, limit, &state->carry_y);
+}
+
+int rr_aim_bone_in_group(int group, int bone) {
+    if (bone<0 || bone>=RR_CHAM_BONES) return 0;
+    switch (group) {
+    case RR_AIM_HEAD: return bone>=RR_RIG_M_HEAD_1_JNT && bone<=RR_RIG_M_TONGUE_3_JNT;
+    case RR_AIM_NECK: return bone==RR_RIG_M_NECK_JNT || bone==RR_RIG_L_ARM_0_JNT || bone==RR_RIG_R_ARM_0_JNT;
+    case RR_AIM_CHEST: return bone==RR_RIG_M_SPINE_2_JNT || bone==RR_RIG_M_SPINE_3_JNT;
+    case RR_AIM_PELVIS: return bone==RR_RIG_M_SPINE_1_JNT || bone==RR_RIG_L_LEG_1_JNT || bone==RR_RIG_R_LEG_1_JNT;
+    case RR_AIM_ARMS: return (bone>=RR_RIG_L_ARM_0_JNT && bone<=RR_RIG_L_ARM_3_JNT) ||
+                            (bone>=RR_RIG_R_ARM_0_JNT && bone<=RR_RIG_R_ARM_3_JNT) ||
+                            bone==RR_RIG_L_ARMTWIST_JNT || bone==RR_RIG_R_ARMTWIST_JNT;
+    case RR_AIM_LEGS: return (bone>=RR_RIG_L_LEG_1_JNT && bone<=RR_RIG_L_LEG_3_JNT) ||
+                            (bone>=RR_RIG_R_LEG_1_JNT && bone<=RR_RIG_R_LEG_3_JNT);
+    case RR_AIM_FACE: return bone>=RR_RIG_L_EYELIDUP_JNT && bone<=RR_RIG_M_TONGUE_3_JNT;
+    case RR_AIM_HANDS: return (bone>=RR_RIG_L_ARM_3_JNT && bone<=RR_RIG_L_THUMB_3_JNT) ||
+                             (bone>=RR_RIG_R_ARM_3_JNT && bone<=RR_RIG_R_THUMB_3_JNT);
+    case RR_AIM_FEET: return (bone>=RR_RIG_L_LEG_3_JNT && bone<=RR_RIG_L_FOOT_2_JNT) ||
+                            (bone>=RR_RIG_R_LEG_3_JNT && bone<=RR_RIG_R_FOOT_2_JNT);
+    case RR_AIM_CLOSEST: return rr_rig_is_body_joint(bone);
+    default: return 0;
+    }
+}
+----- rr_aim_motion_point -----
+rr_aim_motion_point(RR_V3 point, RR_V3 position, RR_V3 previous,
+                        unsigned sample_ms, unsigned age_ms, int smooth, RR_V3* out) {
+    if (sample_ms < 8 || sample_ms > 120 || age_ms > 80) return 0;
+    float vx = (position.x - previous.x) * 1000.0f / sample_ms;
+    float vz = (position.z - previous.z) * 1000.0f / sample_ms;
+    float speed = hypotf(vx, vz);
+    if (!(speed >= 0.2f && speed <= 20.0f)) return 0;
+
+    /* Lead through the whole smoothing delay, not just part of it, plus the
+     * age of the snapshot the point came from. At equilibrium that cancels the
+     * lag of an exponential follow, so a constant-velocity target settles on
+     * the crosshair instead of trailing behind it. The cap bounds the
+     * extrapolation error when a target changes direction mid-lead. */
+    float seconds = (aim_response_ms(smooth) + (float)age_ms) * 0.001f;
+    seconds = fminf(seconds, 0.20f);
+    *out = (RR_V3){ point.x + vx * seconds, point.y, point.z + vz * seconds };
+    return 1;
+}
+### CONVERSION
+rr_aim.c:16: float radius = (float)(config->aa_fov_px > 0 ? config->aa_fov_px : 150);
+rr_aim.c:121: * ratio depends on the game sensitivity; --aimtest measures it for the current
+rr_aim.c:128: * angular correction at different sensitivities.
+rr_draw.c:276: float x=xy[b*2],y=xy[b*2+1],px=xy[parent*2],py=xy[parent*2+1];
+rr_draw.c:277: if (isfinite(x) && isfinite(y) && isfinite(px) && isfinite(py)) r_line(px,py,x,y);
+rr_draw.c:677: int r = b->aa_fov_px;
+rr_esp.c:743: MIX(b->radar_on); MIX(b->radar_range); MIX(b->radar_world); MIX(b->show_containers); MIX(b->show_doors); MIX(b->show_dropped_loot); MIX(b->show_vehicle_loot);    MIX(b->line_w); MIX(b->aa_on); MIX(b->aa_fov_px); MIX(b->aa_switch_margin); MIX(b->menu_open);
+rr_esp.c:1592: /* Case-insensitive substring test. Used for the name filter because the item
+rr_esp.c:2211: out("[aimtest] sending 20 x +8 px horizontal\n");
+rr_esp.c:2224: * calibration depends on the current game sensitivity and valid camera reads.
+rr_esp.c:2234: float deg_per_px = cam.fov / (float)vh;
+rr_esp.c:2235: float counts_per_px = deg_per_px / deg_per_count;
+rr_esp.c:2240: out("[aimtest] at %.0f deg FOV over %d px: %.3f counts per screen pixel\n",
+rr_esp.c:2241: (double)cam.fov, vh, (double)counts_per_px);
+rr_esp.c:2243: (int)(counts_per_px * 100.0f + 0.5f));
+rr_esp.c:2245: (int)(counts_per_px * 100.0f + 0.5f));
+rr_game.c:4122: static int build_bones(uint64_t skel, float yaw, float px, float py, float pz,
+rr_game.c:4161: out[i][0] = px + wx * c + wz * s;
+rr_game.c:4165: fabsf(out[i][0] - px) > 4 || fabsf(out[i][1] - py) > 4 || fabsf(out[i][2] - pz) > 4) return 0;
+rr_game.c:5689: float px=(float)h*0.5f/t,py=px;
+rr_game.c:5695: if (isfinite(x) && isfinite(y)) { xy[2*i]=w*0.5f+x*px; xy[2*i+1]=h*0.5f-y*py; }
+rr_los_runtime.c:22: float px=t->pos[0],py=t->pos[1],pz=t->pos[2];
+rr_los_runtime.c:23: if(!isfinite(px)||!isfinite(py)||!isfinite(pz))return 0;
+rr_los_runtime.c:24: float tx=2*(y*pz-z*py),ty=2*(z*px-x*pz),tz=2*(x*py-y*px);
+rr_los_runtime.c:25: out->pos[0]+=px+w*tx+(y*tz-z*ty);
+rr_los_runtime.c:56: float px=a.x+enter*dx,pz=a.z+enter*dz;
+rr_los_runtime.c:57: int ix=(int)floorf((px-ox)/sx),iz=(int)floorf((pz-oz)/sz);
+rr_los_runtime.c:59: int stepx=dx>0?1:(dx<0?-1:0),stepz=dz>0?1:(dz<0?-1:0);
+rr_los_runtime.c:64: if(stepx){float edge=ox+(stepx>0?ix+1:ix)*sx,tt=(edge-a.x)/dx;if(tt>=cur-1e-6f && tt<next)next=tt;}
+rr_los_runtime.c:76: if(stepx){float edge=ox+(stepx>0?ix+1:ix)*sx,tt=(edge-a.x)/dx;advance_x=fabsf(tt-next)<1e-5f;}
+rr_los_runtime.c:79: if(advance_x)ix+=stepx;if(advance_z)iz+=stepz;cur=next;
+rr_aim.h:33: * vertical FOV. Measure it with --aimtest after changing game sensitivity.
+rr_find.h:24: * whose class name contains `needle` (case-insensitive). Returns the number of
+rr_mem.h:90: /* Module lookup through the target PEB. name is case-insensitive, e.g.
+### CFG
+### ETAT
