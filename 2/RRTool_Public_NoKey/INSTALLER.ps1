@@ -1,8 +1,9 @@
 # Dreww - installateur.
-# Copie le produit dans C:\Dreww, demande la licence, coupe l hyperviseur, pose un raccourci.
-# A lancer par clic droit > Executer avec PowerShell. S eleve tout seul.
+# Copie le produit dans C:\Dreww, installe la licence, coupe l hyperviseur, pose un raccourci.
+# Clic droit > Executer avec PowerShell. S eleve seul. -NoReboot pour tester sans redemarrer.
+param([switch]$NoReboot)
 $ErrorActionPreference = "Stop"
-$src = $PSScriptRoot
+$src = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dst = "C:\Dreww"
 
 function Test-Admin {
@@ -12,8 +13,9 @@ function Test-Admin {
 }
 
 if (-not (Test-Admin)) {
-    Start-Process powershell -Verb RunAs -ArgumentList @(
-        "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $PSCommandPath)
+    $a = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $MyInvocation.MyCommand.Path)
+    if ($NoReboot) { $a += "-NoReboot" }
+    Start-Process powershell -Verb RunAs -ArgumentList $a
     return
 }
 
@@ -22,52 +24,62 @@ Write-Host "=== Installation de Dreww ==="
 Write-Host ""
 
 if (-not (Test-Path (Join-Path $src "1_run\RobRunPort.exe"))) {
-    Write-Host "[STOP] Ce script doit rester dans le dossier livre, a cote de 1_run."
+    Write-Host "[STOP] Ce script doit rester dans le dossier livre."
     Read-Host "Entree pour fermer"
     return
 }
 
 Write-Host "1/4  Copie vers $dst"
-if (Test-Path $dst) {
-    Write-Host "     Le dossier existe deja, contenu remplace."
+New-Item -ItemType Directory -Path $dst -Force | Out-Null
+foreach ($d in "1_run", "setup", "docs") {
+    robocopy (Join-Path $src $d) (Join-Path $dst $d) /E /XF "PROCEDURE_LICENCES.md" "DEFAUTS.md" "RISQUES.md" /NFL /NDL /NJH /NJS /NP | Out-Null
+    if ($LASTEXITCODE -ge 8) {
+        Write-Host "[STOP] copie en echec sur $d (robocopy $LASTEXITCODE)"
+        Read-Host "Entree pour fermer"
+        return
+    }
 }
-robocopy $src $dst /E /XD "$src\_licence" "$src\.git" "$src\_archive" /XF "*.log" /NFL /NDL /NJH /NJS /NP | Out-Null
+Copy-Item (Join-Path $src "INSTALLER.ps1") (Join-Path $dst "INSTALLER.ps1") -Force
 
-Write-Host "2/4  Dossier de licence"
+Write-Host "2/4  Licence"
 $lic = Join-Path $env:LOCALAPPDATA "Dreww"
 New-Item -ItemType Directory -Path $lic -Force | Out-Null
-Write-Host "     Choisis le fichier licence.dat recu apres achat."
 Add-Type -AssemblyName System.Windows.Forms
 $dlg = New-Object System.Windows.Forms.OpenFileDialog
 $dlg.Title = "Selectionne licence.dat"
 $dlg.Filter = "Licence (licence.dat)|*.dat|Tous les fichiers|*.*"
 if ($dlg.ShowDialog() -eq "OK") {
-    Copy-Item $dlg.FileName (Join-Path $lic "licence.dat") -Force
-    Write-Host "     Licence installee."
+    try {
+        Copy-Item $dlg.FileName (Join-Path $lic "licence.dat") -Force
+        Write-Host "     licence installee"
+    } catch {
+        Write-Host "     copie impossible : $($_.Exception.Message)"
+    }
 } else {
-    Write-Host "     Aucun fichier choisi. Depose licence.dat dans $lic puis relance START.bat."
+    Write-Host "     aucun fichier choisi, depose licence.dat dans $lic"
 }
 
 Write-Host "3/4  Protection du pilote"
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v Enabled /t REG_DWORD /d 0 /f | Out-Null
-bcdedit /set hypervisorlaunchtype off | Out-Null
-foreach ($f in "Microsoft-Hyper-V-All", "VirtualMachinePlatform", "HypervisorPlatform", "Containers-DisposableClientVM", "Microsoft-Windows-Subsystem-Linux") {
-    dism /online /quiet /norestart /disable-feature /featurename:$f | Out-Null
+$hv = Join-Path $dst "setup\1_couper_hyperviseur.ps1"
+if (Test-Path $hv) {
+    $pr = Start-Process powershell -Wait -PassThru -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $hv, "-NoReboot")
+    if ($pr.ExitCode -ne 0) { Write-Host "     script hyperviseur code $($pr.ExitCode)" }
+} else {
+    Write-Host "     [ATTENTION] $hv absent, etape sautee"
 }
-foreach ($s in "vmcompute", "HvHost", "vmms", "WslService") {
-    sc.exe stop $s | Out-Null
-    sc.exe config $s start= disabled | Out-Null
-}
-Get-Process "Docker Desktop" | Stop-Process -Force
 
 Write-Host "4/4  Raccourci"
 $ws = New-Object -ComObject WScript.Shell
 $lnk = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath("Desktop")) "Dreww.lnk"))
-$lnk.TargetPath = Join-Path $dst "START.bat"
+$lnk.TargetPath = Join-Path $dst "1_run\START.bat"
 $lnk.WorkingDirectory = $dst
 $lnk.Save()
 
 Write-Host ""
-Write-Host "Installe. Il reste a redemarrer, puis lancer Dreww par le raccourci."
-Write-Host "Redemarrage dans 20 secondes, Ctrl+C pour annuler."
-shutdown /r /t 20
+if ($NoReboot) {
+    Write-Host "Termine, sans redemarrage."
+    Read-Host "Entree pour fermer"
+} else {
+    Write-Host "Installe. Redemarrage dans 20 secondes, Ctrl+C pour annuler."
+    shutdown /r /t 20
+}

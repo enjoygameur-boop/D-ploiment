@@ -50,7 +50,7 @@ Ne le deplace pas ailleurs: le loader cherche exactement la.
 
 Installe le dossier du produit dans un chemin fixe, par exemple `C:\Dreww`. Evite le Bureau, les telechargements et OneDrive: les chemins qui bougent cassent le loader.
 
-Clic droit sur `START.bat`, **Executer en tant qu administrateur**. Ne lance pas `RobRunPort.exe` directement: il demarre sans le contexte du loader.
+Clic droit sur `1_run\START.bat`, **Executer en tant qu administrateur**. Ne lance pas `RobRunPort.exe` directement: il demarre sans le contexte du loader.
 
 ## 8. SmartScreen
 

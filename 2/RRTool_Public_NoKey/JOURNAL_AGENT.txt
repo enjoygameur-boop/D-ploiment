@@ -121,3 +121,9 @@ OUVERT
   Retires de la liste: durcissement keygen.ps1, reprise aim, verification des offsets.
   Restent: durcissement INSTALLER.ps1, exclusion des documents internes du colis, etat des lieux 4-8,
   manuel, defauts D02 D03 D05 D10 D15.
+
+2026-11-23 Installateur durci et teste
+  Chemin deduit par MyInvocation, liste blanche de copie, documents internes exclus.
+  Appel du script hyperviseur avec -NoReboot et controle du code retour, try/catch sur la licence.
+  Test reel: racine propre, raccourci vers 1_run\START.bat, docs reduits a INSTALLATION_CLIENT.md.
+  START.bat: titre de fenetre RRTool remplace par Dreww. Document: chemin 1_run\START.bat.

@@ -27,7 +27,7 @@ if errorlevel 1 (
 )
 
 echo starting the overlay...
-start "RRTool" "RobRunPort.exe"
+start "Dreww" "RobRunPort.exe"
 ping -n 3 127.0.0.1 >nul 2>&1
 
 echo.

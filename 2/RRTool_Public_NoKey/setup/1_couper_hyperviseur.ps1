@@ -1,5 +1,6 @@
 # Dreww - coupe l hyperviseur et tout ce qui bloque le pilote.
 # S eleve tout seul en administrateur, puis redemarre a la fin.
+param([switch]$NoReboot)
 $ErrorActionPreference = "SilentlyContinue"
 
 function Test-Admin {
@@ -9,8 +10,9 @@ function Test-Admin {
 }
 
 if (-not (Test-Admin)) {
-    Start-Process powershell -Verb RunAs -ArgumentList @(
-        "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $PSCommandPath)
+    $a = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $PSCommandPath)
+    if ($NoReboot) { $a += "-NoReboot" }
+    Start-Process powershell -Verb RunAs -ArgumentList $a
     return
 }
 
@@ -38,4 +40,4 @@ Get-Process "Docker Desktop" | Stop-Process -Force
 Write-Host ""
 Write-Host "Termine. Redemarrage dans 15 secondes, Ctrl+C pour annuler."
 Write-Host "Si Windows redemande l integrite de la memoire apres coup, relance ce script."
-shutdown /r /t 15
+if (-not $NoReboot) { shutdown /r /t 15 }
