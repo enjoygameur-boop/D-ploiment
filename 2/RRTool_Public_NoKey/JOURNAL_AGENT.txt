@@ -167,3 +167,9 @@ OUVERT
   Document client: double-clic sur INSTALLER.cmd.
   Cas corrige: licence deja a destination, Copy-Item sur lui-meme evite.
   Test reel par le .cmd: 4 etapes passent, INSTALLER.cmd copie, raccourci et licence en place.
+
+2026-11-23 D05 ferme: alerte d expiration
+  lic_days_left dans licence.h et licence.c: relit le jeton, verifie la signature, rend les jours.
+  aio_launcher.c: sous 7 jours, journal "licence: OK, expire dans N jour(s)".
+  Arrondi tronque corrige en arrondi superieur apres test a 3 jours.
+  Deux builds propres, driver mappe, overlay fonctionnel. _wl.txt a jour.

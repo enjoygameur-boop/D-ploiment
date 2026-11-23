@@ -330,3 +330,29 @@ int lic_bind(void) {
     lic_slots_save(bp, slots, count);
     return 0;
 }
+
+int lic_days_left(void) {
+    wchar_t path[MAX_PATH];
+    char raw[512];
+    unsigned char tok[128];
+    DWORD got = 0;
+    int len = 0, tn = 0;
+    long long exp, now;
+    HANDLE h;
+
+    if (!lic_path(path, MAX_PATH)) return -1;
+    h = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (h == INVALID_HANDLE_VALUE) return -1;
+    if (!ReadFile(h, raw, sizeof(raw) - 1, &got, NULL)) { CloseHandle(h); return -1; }
+    CloseHandle(h);
+    raw[got] = 0;
+    while (len < (int)got && raw[len] != 32 && raw[len] != 13 && raw[len] != 10) ++len;
+    if (len < LIC_PAYLOAD + LIC_SIG) return -1;
+    tn = b64_decode(raw, len, tok, sizeof(tok));
+    if (tn != LIC_PAYLOAD + LIC_SIG) return -1;
+    if (!lic_verify(tok, LIC_PAYLOAD, tok + LIC_PAYLOAD)) return -1;
+    exp = *(long long*)(tok + 29);
+    now = lic_now();
+    if (exp <= now) return 0;
+    return (int)((exp - now + 86399LL) / 86400LL);
+}

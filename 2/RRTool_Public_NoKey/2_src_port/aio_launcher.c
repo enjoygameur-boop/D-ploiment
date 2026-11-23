@@ -1554,7 +1554,13 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE prev, LPWSTR cmdline, int show) {
             fail(L"Licence absente ou invalide (code %d).\n\n%s\n\nEmpreinte machine:\n%s\n\nFichier attendu:\n%%LOCALAPPDATA%%\\Dreww\\licence.dat",
                  lc, lic_last_error(lc), fphex);
         }
-        log_add(L"licence: OK");
+        {
+            int dl = lic_days_left();
+            if (dl >= 0 && dl <= 7)
+                log_add(L"licence: OK, expire dans %d jour(s)", dl);
+            else
+                log_add(L"licence: OK");
+        }
         if (lic_bind() == 1) {
             wchar_t fpx[40] = L"";
             if (!lic_fingerprint_hex(fpx, 40)) wcscpy_s(fpx, 40, L"indisponible");

@@ -15,3 +15,4 @@ const wchar_t* lic_last_error(int code);
 
 #endif
 
+int lic_days_left(void);
