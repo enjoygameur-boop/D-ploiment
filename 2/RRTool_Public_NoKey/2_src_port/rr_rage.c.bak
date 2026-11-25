@@ -1,0 +1,158 @@
+/* rr_rage.c - visée standard : AimTargetModel + rot + sensibilite a zero. */
+#include <windows.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
+#include "rr_mem.h"
+#include "rr_unity.h"
+#include "rr_game.h"
+
+#define RAGE_LOG "C:\\Users\\ABC\\Desktop\\Cheats\\2\\RRTool_Public_NoKey\\1_run\\rage.log"
+#define DEG2RAD 0.01745329f
+
+static volatile LONG g_rage_started;
+static FILE* g_lg;
+static DWORD g_lastlog;
+static RR_PLAYER g_pl[RR_MAX_PLAYERS];
+static RR_CAMERA g_cam;
+static int g_snap_n;
+static DWORD g_snap_at;
+static uint64_t g_game;
+static int g_fire, g_have;
+static float g_by, g_bp;
+
+static void lg_(const char* fmt, ...) {
+    va_list a;
+    if (!g_lg) return;
+    va_start(a, fmt); vfprintf(g_lg, fmt, a); va_end(a);
+    fputc('\n', g_lg); fflush(g_lg);
+}
+static int wrf(uint64_t a, float v) { return rr_write(a, &v, 4); }
+static int rdf(uint64_t a, float* o) { return rr_read(a, o, 4); }
+static void wri32(uint64_t a, int v) { rr_write(a, &v, 4); }
+
+static void nospread(uint64_t ch) {
+    uint64_t a = rr_u64(ch + 0x10u), s;
+    if (!PL(a)) return;
+    s = rr_u64(a + 0x220u);
+    if (!PL(s)) return;
+    wri32(s + 0x20u, 0);
+    wri32(s + 0x24u, 0);
+}
+
+static int pick(uint64_t rot, float* oy, float* op, int32_t* oid) {
+    float cy, cp, fx, fy, fz, best = 25.0f * DEG2RAD;
+    int bi = -1, i;
+    DWORD now = GetTickCount();
+    if (!rdf(rot + 0x10u, &cy) || !rdf(rot + 0x14u, &cp)) return 0;
+    if (cy != cy || cp != cp) return 0;
+    fx = sinf(cy) * cosf(cp); fy = -sinf(cp); fz = cosf(cy) * cosf(cp);
+    if ((DWORD)(now - g_snap_at) > 100) { g_snap_at = now; g_snap_n = game_snapshot(g_pl, RR_MAX_PLAYERS, &g_cam); }
+    for (i = 0; i < g_snap_n; i++) {
+        RR_PLAYER* p = &g_pl[i];
+        float dx, dy, dz, ln, d;
+        if (!(p->dist > 2.0f && p->dist < 300.0f)) continue;
+        if (!p->id) continue;
+        dx = p->head.x - g_cam.pos.x; dy = p->head.y - g_cam.pos.y; dz = p->head.z - g_cam.pos.z;
+        ln = sqrtf(dx * dx + dy * dy + dz * dz);
+        if (ln < 1.0f) continue;
+        d = (dx * fx + dy * fy + dz * fz) / ln;
+        if (d > 1.0f) d = 1.0f;
+        if (d < -1.0f) d = -1.0f;
+        d = acosf(d);
+        if (d > best) continue;
+        best = d; bi = i;
+    }
+    if (bi < 0) return 0;
+    {
+        RR_PLAYER* p = &g_pl[bi];
+        float dx = p->head.x - g_cam.pos.x, dy = p->head.y - g_cam.pos.y, dz = p->head.z - g_cam.pos.z;
+        float ln = sqrtf(dx * dx + dy * dy + dz * dz);
+        if (ln < 1.0f) return 0;
+        *oy = atan2f(dx, dz);
+        *op = -asinf(dy / ln);
+        if (*op > 1.4f) *op = 1.4f;
+        if (*op < -1.4f) *op = -1.4f;
+        if (*oy != *oy || *op != *op) return 0;
+        *oid = p->id;
+    }
+    return 1;
+}
+
+static void tick(uint64_t ch, uint64_t battle) {
+    uint64_t rot, aim, r2, sens = 0;
+    float yaw = 0.0f, pitch = 0.0f;
+    int32_t cid = 0;
+    int fire, ok = 0;
+    DWORD now = GetTickCount();
+    if (PL(ch)) nospread(ch);
+    if (!PL(battle)) return;
+    rot = rr_u64(battle + 0x40u);
+    if (!PL(rot)) return;
+    aim = rr_u64(battle + 0x198u);
+    fire = (GetAsyncKeyState(0x01) & 0x8000) != 0;
+    if (fire && !g_fire) g_have = (rdf(rot + 0x10u, &g_by) && rdf(rot + 0x14u, &g_bp));
+    if (fire && PL(aim) && pick(rot, &yaw, &pitch, &cid)) {
+        r2 = rot;
+        wri32(aim + 0x10u, cid);
+        wri32(aim + 0x14u, 3);
+        wrf(rot + 0x10u, yaw);
+        wrf(rot + 0x14u, pitch);
+        if (PL(g_game)) sens = rr_u64(g_game + 0x58u);
+        if (PL(sens)) { wrf(sens + 0x10u, 0.0f); wrf(sens + 0x14u, 0.0f); }
+        ok = 1;
+    }
+    if (!fire && g_fire) {
+        if (PL(aim)) { wri32(aim + 0x10u, -1); wri32(aim + 0x14u, 0); }
+        if (g_have) { wrf(rot + 0x10u, g_by); wrf(rot + 0x14u, g_bp); g_have = 0; }
+    }
+    if ((DWORD)(now - g_lastlog) > 250) {
+        g_lastlog = now;
+        lg_("ST cid=%d aim=%llX r2=%llX sens=%llX ok=%d yaw=%.4f pitch=%.4f", cid, (unsigned long long)aim, (unsigned long long)r2, (unsigned long long)sens, ok, yaw, pitch);
+    }
+    g_fire = fire;
+}
+
+static DWORD WINAPI rage_thread(LPVOID unused) {
+    uint64_t updater = 0, battle = 0, local = 0;
+    DWORD resolved = 0;
+    HANDLE proc = NULL;
+    (void)unused;
+    g_lg = fopen(RAGE_LOG, "w");
+    lg_("thread start");
+    for (;;) {
+        DWORD now;
+        if (proc) {
+            if (WaitForSingleObject(proc, 0) == WAIT_OBJECT_0) {
+                CloseHandle(proc); proc = NULL; resolved = 0; battle = 0; local = 0;
+                lg_("process gone, pause"); Sleep(600); continue;
+            }
+        } else if (g_rr_pid) {
+            proc = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, FALSE, g_rr_pid);
+            if (!proc) { Sleep(100); continue; }
+            lg_("process attache");
+        } else { Sleep(100); continue; }
+        now = GetTickCount();
+        if ((DWORD)(now - resolved) >= 2000) {
+            int scanning = 0;
+            resolved = now;
+            g_game = 0;
+            game_scene_debug(&g_game, &updater, &scanning);
+            battle = PL(updater) ? rr_u64(updater + 0x70u) : 0;
+            local = rr_local_player();
+            lg_("res game=%llX bat=%llX loc=%llX", (unsigned long long)g_game, (unsigned long long)battle, (unsigned long long)local);
+        }
+        __try { tick(local, battle); } __except (EXCEPTION_EXECUTE_HANDLER) { lg_("tick fault"); battle = 0; }
+        Sleep(10);
+    }
+}
+
+void rage_start(void) {
+    HANDLE t;
+    if (InterlockedCompareExchange(&g_rage_started, 1, 0) != 0) return;
+    t = CreateThread(NULL, 0, rage_thread, NULL, 0, NULL);
+    if (t) CloseHandle(t);
+    else InterlockedExchange(&g_rage_started, 0);
+}
