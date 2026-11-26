@@ -22,3 +22,5 @@ _licence/SERIE.txt
 
 # Brouillons
 _scratch/build_*.txt
+dist/Dreww_*.zip
+dist/Dreww_*/

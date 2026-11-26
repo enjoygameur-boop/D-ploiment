@@ -191,3 +191,9 @@ OUVERT
   Deux binaires renommes par git mv, script de build, README loader, installateur, cartographie, journaux.
   Loader reconstruit: BUILD_OK. Symboles FFLoader de tools/il2cpp.h laisses (classes du jeu).
   DrewwLoader ajoute au manifeste _wl.txt.
+
+2026-11-23 PACKAGE.ps1: fabrication du paquet client
+  Assemble dans dist/ le strict necessaire: 1_run sans payload ni restes, setup, document client, INSTALLER.cmd et .ps1.
+  Exclut _licence, sources, documents internes, payload, *.orig, masq.txt, journal runtime.
+  Zippe, affiche taille et SHA256. Test reel: extraction, installation complete, copie conforme au hachage.
+  Sorties dist ignorees par git.
