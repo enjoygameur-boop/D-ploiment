@@ -2899,7 +2899,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
 
     if (!mode_menu && !mode_demo) rr_los_start();
     if (!mode_menu) CreateThread(NULL, 0, ReadThread, NULL, 0, NULL);
-    if (!mode_menu) { CreateThread(NULL, 0, RenderThread, NULL, 0, NULL); { void rage_start(void); rage_start(); } }
+    if (!mode_menu) { CreateThread(NULL, 0, RenderThread, NULL, 0, NULL); }
 
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {

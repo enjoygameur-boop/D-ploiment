@@ -37,8 +37,6 @@ set "CXXFLAGS=/nologo /O2 /D_CRT_SECURE_NO_WARNINGS /W3 /MT /EHsc"
 echo [1/9] rr_esp.c
 cl %CFLAGS% /c rr_esp.c /Fo:rr_esp.obj || goto fail
 cl %CFLAGS% /c licence.c /Fo:licence.obj || goto fail
-echo [1b/9] rr_rage.c
-cl %CFLAGS% /c rr_rage.c /Fo:rr_rage.obj || goto fail
 echo [2/9] rr_game.c
 cl %CFLAGS% /c rr_game.c /Fo:rr_game.obj || goto fail
 echo [3/9] rr_mem.c
@@ -49,7 +47,7 @@ echo [5/9] rr_chain.c
 cl %CFLAGS% /c rr_chain.c /Fo:rr_chain.obj || goto fail
 echo [6/9] rr_draw.c
 cl %CFLAGS% /c rr_draw.c /Fo:rr_draw.obj || goto fail
-cl %CFLAGS% /c rr_aim.c /Fo:rr_aim.obj rr_rage.obj || goto fail
+cl %CFLAGS% /c rr_aim.c /Fo:rr_aim.obj || goto fail
 cl %CFLAGS% /c rr_los_geom.c /Fo:rr_los_geom.obj || goto fail
 cl %CFLAGS% /c rr_los_capture.c /Fo:rr_los_capture.obj || goto fail
 cl %CFLAGS% /c rr_los_runtime.c /Fo:rr_los_runtime.obj || goto fail
@@ -66,7 +64,7 @@ cl %CFLAGS% /c rr_find.c /Fo:rr_find.obj || goto fail
 echo [9/9] resources + link
 rc /nologo /fo app.res app.rc || goto fail
 link /nologo /SUBSYSTEM:WINDOWS /MACHINE:X64 /OUT:RobRunPort.exe ^
-  rr_esp.obj rr_game.obj rr_mem.obj rr_unity.obj rr_chain.obj rr_draw.obj rr_aim.obj rr_rage.obj ^
+  rr_esp.obj rr_game.obj rr_mem.obj rr_unity.obj rr_chain.obj rr_draw.obj rr_aim.obj ^
   rr_los_geom.obj rr_los_capture.obj rr_los_runtime.obj rr_los.obj rr_spawn.obj ^
  rr_nodescan.obj rr_classscan.obj rr_exp.obj rr_find.obj ^
   gpu.obj menu_webview.obj licence.obj app.res ^
