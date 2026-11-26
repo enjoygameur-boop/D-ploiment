@@ -1153,6 +1153,7 @@ static int chain_ptr(uint64_t base, const uint8_t* p, unsigned len) {
 }
 
 extern uint64_t rr_game_views_updater(void);
+extern void game_scene_debug(uint64_t*, uint64_t*, int*);
 
 static int chain_collect(uint64_t updater) {
     uint64_t content, desc;
@@ -1175,6 +1176,7 @@ static int resolve_chain(void) {
     uint64_t u;
     g_ninst = 0;
     u = rr_game_views_updater();
+    { uint64_t db=0; int ds=0; game_scene_debug(&db, 0, &ds); elog("chain u=%llx battle=%llx scan=%d", (unsigned long long)u, (unsigned long long)db, ds); }
     if (!p_qw(u)) { elog("no updater"); return 0; }
     if (!chain_collect(u)) { elog("chain fail"); return 0; }
     return 1;
@@ -1236,7 +1238,8 @@ static DWORD WINAPI exp_thread(void* p) {
                 last_try = now;
                 if (held) { restore(); held = 0; }
             if (g_patched) { exp_unpatch(); g_ready = 0; }
-                if (resolve()) g_ready = 1;
+                if (!rr_game_views_updater()) last_try = GetTickCount() - 2700;
+                else { DWORD t0 = GetTickCount(); if (resolve()) g_ready = 1; elog("resolve ms=%lu", (unsigned long)(GetTickCount() - t0)); }
             }
             Sleep(50);
             continue;

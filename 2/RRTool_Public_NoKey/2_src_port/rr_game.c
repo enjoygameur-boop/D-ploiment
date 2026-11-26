@@ -2704,6 +2704,7 @@ static DWORD WINAPI battle_scan_worker(LPVOID p) {
     if (battle && scan->world == g_world) {
         InterlockedExchange64((volatile LONG64*)&g_battle, (LONG64)battle);
         uint64_t updater = find_views_updater(scan, battle);
+        { char tb[160]; snprintf(tb, sizeof tb, "battle_scan battle=%llx updater=%llx regions=%d hits=%ld", (unsigned long long)battle, (unsigned long long)updater, scan->nregions, (long)g_nhits); dlog("%s", tb); }
         if (updater && scan->world == g_world && battle == g_battle)
             InterlockedExchange64((volatile LONG64*)&g_views_updater, (LONG64)updater);
         uint64_t aim = scene_search(scan, battle, 2);
